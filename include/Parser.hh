@@ -22,6 +22,7 @@ private:
     Expr* Factor();
     Expr* Addition();
     Expr* Expression();
+    Expr* ComparatorExpr();
     Expr* ParseFuncCallExpr();
     Expr* ParseLiteralExpr();
     Expr* ParseIdentifierExpr();

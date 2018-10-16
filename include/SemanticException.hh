@@ -5,6 +5,7 @@
 
 enum class SemanticError {
     UndeclaredVariable,
+    UndeclaredFunction,
     UnknownOperation,
 };
 

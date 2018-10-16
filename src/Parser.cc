@@ -26,7 +26,28 @@ bool Parser::Peek(Token t) noexcept {
     return  (m_Lexer.Peek() == t);
 }
 
-Expr* Parser::Expression() {
+Expr* Parser::Expression()
+{
+    Expr* ex = ComparatorExpr();
+    switch (m_CurrentToken)
+    {
+        case Token::OR : {
+            Advance();
+            ex = new BinaryExpr(ex, Token::OR, Expression());
+            break;
+        }
+        case Token::AND : {
+            Advance();
+            ex = new BinaryExpr(ex, Token::AND, Expression());
+            break;
+        }
+        default : break;
+    }
+
+    return ex;
+}
+
+Expr* Parser::ComparatorExpr() {
     Expr* ex = Addition();
 
     switch(m_CurrentToken) {
@@ -36,23 +57,23 @@ Expr* Parser::Expression() {
         case (Token::OP_DEQ) : {
             Token op = m_CurrentToken;
             Advance();
-            ex = new BinaryExpr(ex, op, Expression());
+            ex = new BinaryExpr(ex, op, ComparatorExpr());
             break;
         }
         case (Token::OP_NEQ) : {
             Token op = m_CurrentToken;
             Advance();
-            ex = new BinaryExpr(ex, op, Expression());
+            ex = new BinaryExpr(ex, op, ComparatorExpr());
             break;
         }
         case (Token::OP_LT) : {
             Advance();
-            ex = new BinaryExpr(ex, Token::OP_LT, Expression());
+            ex = new BinaryExpr(ex, Token::OP_LT, ComparatorExpr());
             break;
         }
         case (Token::OP_LTE) : {
              Advance();
-             ex = new BinaryExpr(ex, Token::OP_LTE, Expression());
+             ex = new BinaryExpr(ex, Token::OP_LTE, ComparatorExpr());
              break;
         }
         case (Token::INVALID) : {

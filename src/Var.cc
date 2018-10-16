@@ -25,6 +25,8 @@ Var::Var(std::string s)
     : m_CurrentType(Type::String), m_value(s) {}
 
 // Var(std::shared_ptr<std::vector<Var> > pv) : m_value(pv) {}
+Var::Var(Callable* c)
+    : m_CurrentType(Type::Callable), m_value(c) {}
 
 Var::operator bool() const{
     switch (m_CurrentType) {
@@ -46,16 +48,16 @@ Var::operator bool() const{
 Var::operator int() const {
     switch (m_CurrentType) {
         case Type::Bool : {
-            return std::get<bool>(m_value) == true  ;
+            return std::get<bool>(m_value) == true ? 1 : 0;
         }
         case Type::Int : {
-            return get<int> (m_value) == 0 ? false : true;
+            return get<int> (m_value);
         }
         case Type::Double : {
-            return get<double> (m_value) == 0 ? false : true;
+            return int(get<double> (m_value));
         }
         case Type::String : {
-            return get<std::string> (m_value).size() == 0 ? false : true;
+            return stoi(get<std::string> (m_value));
         }
     }
 }

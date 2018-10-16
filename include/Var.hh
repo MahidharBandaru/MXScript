@@ -20,8 +20,7 @@ struct Var {
     Var(std::string);
     Var(const char* const begin, const char* const end); // [....)
 
-    Var(Callable* c)
-        : m_CurrentType(Type::Callable), m_value(c) {}
+    Var(Callable* c);
 
     Var(std::shared_ptr<std::vector<Var>> sv) : m_value(sv) {}
     Var(const Var& other) : m_value(other.m_value), m_CurrentType(other.m_CurrentType) {}

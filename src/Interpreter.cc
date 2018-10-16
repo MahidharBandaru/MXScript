@@ -19,6 +19,8 @@ Interpreter::Interpreter()
         {"print", new BuiltInPrint()},
         {"println", new BuiltInPrintLn()},
         {"input", new BuiltInInput()},
+        {"int", new BuiltInInt()},
+        {"str", new BuiltInStr()}
     } {}
 
 void Interpreter::Evaluate(std::string const& s)
@@ -34,7 +36,6 @@ void Interpreter::Evaluate(std::string const& s)
     }
     catch (const SyntaxException& e) 
     {
-        // std::cout << "SyntaxExceptION " << e.what() << std::endl;
         const char * c = e.what();
         std::cout << c << std::endl;
         std::exit(EXIT_FAILURE);
@@ -91,6 +92,12 @@ Var Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
         case (Token::OP_DEQ) : {
             return left == right;
         }
+        case Token::OR : {
+            return bool(left) || bool(right);
+        }
+        case Token::AND : {
+            return bool(left) && bool(right);
+        }
         case (Token::OP_NEQ) : {
             return left != right;
         }
@@ -124,7 +131,7 @@ Var Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
 
     if(m_Env.find(func_name) == m_Env.end())
     {
-        throw SemanticException(SemanticError::UndeclaredVariable);
+        throw SemanticException(SemanticError::UndeclaredFunction);
     }
     // if(!m_Env.at(func_name).IsCallable())
     // {
@@ -153,15 +160,18 @@ Var Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
         
         m_Env.insert(std::make_pair(sig, arg));
     }
-    Var res;
+    Var res = Var();
     try
     {
         res =  ((Callable*)(m_Env.at(func_name)))->call(this);
 
-    } catch(std::exception e)
+    } catch (std::bad_variant_access& e)
     {
-        std::cout << "Object not callable" << std::endl;
-        res = Var();
+        LOG("Object not callable")
+        LOG(e.what())
+    } catch (TypeException& e)
+    {
+        LOG("Bad Types");
     }
     m_Env = temp;
     return res;

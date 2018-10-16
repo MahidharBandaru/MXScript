@@ -13,6 +13,10 @@
 FuncDecl* BuiltInPrintDecl = new FuncDecl(std::string("print"), {std::string("x")}, {});
 FuncDecl* BuiltInPrintLnDecl = new FuncDecl(std::string("println"), {std::string("x")}, {});
 FuncDecl* BuiltInInputDecl = new FuncDecl(std::string("input"), {}, {});
+FuncDecl* BuiltInIntDecl = new FuncDecl(std::string("int"), {std::string("x")}, {});
+FuncDecl* BuiltInStrDecl = new FuncDecl(std::string("str"), {std::string("x")}, {});
+
+std::string const arg {"x"};
 
 struct BuiltInPrint : public Callable
 {
@@ -24,10 +28,7 @@ struct BuiltInPrint : public Callable
         i->m_Env.at(arg).Print();
         return Var();
     }
-    static const std::string arg;
 };
-
-const std::string BuiltInPrint::arg = "x";
 
 
 
@@ -42,10 +43,7 @@ struct BuiltInPrintLn : public Callable
         LOG("")
         return Var();
     }
-    static const std::string arg;
 };
-
-const std::string BuiltInPrintLn::arg = "x";
 
 
 
@@ -56,8 +54,32 @@ struct BuiltInInput : public Callable
 
     Var call (Interpreter* i) override
     {
-        int x;
+        std::string x;
         std::cin >> x;
         return Var(x);
+    }
+};
+
+
+struct BuiltInInt : public Callable
+{
+    BuiltInInt ()
+        : Callable(BuiltInIntDecl) {}
+
+    Var call (Interpreter* i) override
+    {
+        return Var(int(i->m_Env.at(arg)));
+    }
+};
+
+
+struct BuiltInStr : public Callable
+{
+    BuiltInStr ()
+        : Callable(BuiltInStrDecl) {}
+
+    Var call (Interpreter* i) override
+    {
+        return Var(std::string(i->m_Env.at(arg)));
     }
 };

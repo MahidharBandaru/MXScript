@@ -6,6 +6,8 @@
 struct Function;
 struct BuiltInPrint;
 struct BuiltInPrintLn;
+struct BuiltInInt;
+struct BuiltInStr;
 
 struct Interpreter final: public ExprVisitor, StmtVisitor, DeclVisitor
 {
@@ -43,4 +45,6 @@ private:
     friend BuiltInPrint;
     friend BuiltInPrintLn;
     friend Function;
+    friend BuiltInInt;
+    friend BuiltInStr;
 };

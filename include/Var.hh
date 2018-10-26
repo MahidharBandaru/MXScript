@@ -10,6 +10,7 @@
 #define LOG(x) std::cout << x << std::endl;
 
 struct Callable;
+struct Object;
 
 struct Var {
     Var();
@@ -20,7 +21,8 @@ struct Var {
     Var(std::string);
     Var(const char* const begin, const char* const end); // [....)
 
-    Var(Callable* c);
+    Var (Callable * c);
+    Var (Object * o) : m_value (o), m_CurrentType (Type::Object) {}
 
     Var(std::shared_ptr<std::vector<Var>> sv) : m_value(sv) {}
     Var(const Var& other) : m_value(other.m_value), m_CurrentType(other.m_CurrentType) {}
@@ -31,6 +33,10 @@ struct Var {
     operator std::string() const;
     operator Callable*() const {
         return std::get<Callable*>(m_value);
+    }
+    operator Object * () const
+    {
+        return std::get<Object *> (m_value);
     }
     bool operator==(const Var&);
     bool operator!= (const Var&);
@@ -55,7 +61,8 @@ struct Var {
         return m_CurrentType == Type::Callable;
     }
 private:
-    std::variant<std::monostate, bool, int, double, std::string, std::shared_ptr<std::vector<Var> >, Callable* > m_value;
+    std::variant<std::monostate, bool, int, double, std::string,
+                std::shared_ptr<std::vector<Var> >, Callable*, Object*> m_value;
 
     struct PrintVisitor {
         void operator()(std::monostate) const{
@@ -82,6 +89,14 @@ private:
                 std::cout << ", ";
             }
             std::cout << "]";
+        }
+        void operator() (Callable * c)
+        {
+            std::cout << "<Function at " << c << ">";
+        }
+        void operator() (Object * o)
+        {
+            std::cout << "<Instance of ..?..>";
         }
     };
 

@@ -7,6 +7,7 @@
 #include <vector>
 
 struct Interpreter;
+struct Parser;
 struct Expr;
 
 struct Stmt {
@@ -35,19 +36,20 @@ private:
 
 
 
-struct FuncDeclStmt final : public Stmt
+struct FuncDeclStmt : public Stmt
 {
     FuncDeclStmt(std::string func_name, std::vector<std::string> args, Stmt* block)
         : m_FuncDecl(new FuncDecl(func_name, args, block)) {}
 
-    void Execute(StmtVisitor* v) override
+    virtual void Execute(StmtVisitor* v) override
     {
         v->visit_FuncDeclStmt(this);
     }
-private:
+protected:
     FuncDecl* m_FuncDecl;
 
     friend Interpreter;
+    friend Parser;
 };
 
 
@@ -152,3 +154,31 @@ struct CondStmt final : public Stmt
     Expr* m_CondExpr;
     Stmt* m_IfBlock, *m_ElseBlock;
 };
+
+
+
+// struct StructDeclStmt final : public Stmt
+// {
+//     StructDeclStmt (std::string struct_name,
+//                     std::unique_ptr<ConstructorDeclStmt> constructor,
+//                     std::vector<std::unique_ptr<IdentifierExpr>> attributes)
+//         : m_StructDecl (new StructDecl (struct_name, constructor, attributes)) {}
+
+//     void Execute (StmtVisitor* sv) override
+//     {
+//         sv->visitStructDeclStmt (this);
+//     }
+
+//     std::unique_ptr<StructDecl> m_StructDecl;
+// };
+
+// struct ConstructorDeclStmt : public FuncDeclStmt
+// {
+//     ConstructorDeclStmt (std::string func_name, std::vector<std::string> args, Stmt* block)
+//         : FuncDeclStmt(func_name, args, block) {}
+
+//     void Execute(StmtVisitor* v) override
+//     {
+//         v->visit_ConstructorDeclStmt(this);
+//     }
+// };

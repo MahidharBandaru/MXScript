@@ -8,13 +8,15 @@ struct IdentifierExpr;
 struct BinaryExpr;
 struct GroupExpr;
 struct FuncCallExpr;
+struct MethodCallExpr;
 
 struct ExprVisitor {
-    virtual Var visit_LiteralExpr(LiteralExpr*) = 0;
-    virtual Var visit_IdentifierExpr(IdentifierExpr*) = 0;
-    virtual Var visit_BinaryExpr(BinaryExpr*) = 0;
-    virtual Var visit_GroupExpr(GroupExpr*) = 0;
-    virtual Var visit_FuncCallExpr(FuncCallExpr*) = 0;
+    virtual void visit_LiteralExpr(LiteralExpr*) = 0;
+    virtual void visit_IdentifierExpr(IdentifierExpr*) = 0;
+    virtual void visit_BinaryExpr(BinaryExpr*) = 0;
+    virtual void visit_GroupExpr(GroupExpr*) = 0;
+    virtual void visit_FuncCallExpr(FuncCallExpr*) = 0;
+    virtual void visit_MethodCallExpr (MethodCallExpr *) = 0;
 };
 
 
@@ -28,6 +30,7 @@ struct CondStmt;
 struct VarDeclStmt;
 struct FuncDeclStmt;
 struct FuncCallStmt;
+struct ConstructorDeclStmt;
 
 struct StmtVisitor {
     virtual void visit_ExprStmt(ExprStmt*) = 0;
@@ -38,14 +41,17 @@ struct StmtVisitor {
     virtual void visit_VarDeclStmt(VarDeclStmt*) = 0;
     virtual void visit_FuncDeclStmt(FuncDeclStmt*) = 0;
     virtual void visit_FuncCallStmt(FuncCallStmt*) = 0;
+    // virtual void visit_ConstructorDeclStmt(ConstructorDeclStmt*) = 0;
 };
 
 
 
 struct VarDecl;
 struct FuncDecl;
+struct StructDecl;
 
 struct DeclVisitor {
     virtual void visit_VarDecl(VarDecl*) = 0;
     virtual void visit_FuncDecl(FuncDecl*) = 0;
+    virtual void visit_StructDecl (StructDecl *) = 0;
 };

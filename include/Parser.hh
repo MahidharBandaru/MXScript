@@ -26,6 +26,7 @@ private:
     Expr* ParseFuncCallExpr();
     Expr* ParseLiteralExpr();
     Expr* ParseIdentifierExpr();
+    Expr * ParseMethodCallExpr ();
     
     Stmt* Statement();
     Stmt* ParseExprStmt();
@@ -36,6 +37,9 @@ private:
     Stmt* ParseFuncDeclStmt();
     Stmt* ParseBlockStmt();
     Stmt* ParseFuncCallStmt();
-    
+    Stmt* ParseStructDecl();
+    Stmt* ParseStructBlockStmt();
+    Stmt* ParseConstructorDeclStmt();
+
     void Eat(Token);
 };

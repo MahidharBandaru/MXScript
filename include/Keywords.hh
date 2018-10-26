@@ -15,4 +15,6 @@ std::map<std::string, Token> const keywords =
     std::make_pair(std::string("while"), Token::WHILE),
     std::make_pair(std::string("break"), Token::BREAK),
     std::make_pair(std::string("is"), Token::OP_DEQ),
+    std::make_pair(std::string("struct"), Token::STRUCT),
+    std::make_pair(std::string("constructor"), Token::CONSTRUCTOR),
 };

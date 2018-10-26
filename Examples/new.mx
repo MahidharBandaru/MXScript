@@ -1,0 +1,2 @@
+a = Struct();
+println(12);

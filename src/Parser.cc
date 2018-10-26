@@ -129,6 +129,10 @@ Expr* Parser::Primary() {
                 ex = ParseFuncCallExpr();
                 // Advance();
             }
+            else if (Peek(Token::DOT))
+            {
+                ex = ParseMethodCallExpr ();
+            }
             else
             {
                 // std::string s = std::string(m_Lexer.GetValue());
@@ -182,6 +186,14 @@ Expr* Parser::ParseFuncCallExpr()
     }
     Eat(Token::R_PAREN);
     return (new FuncCallExpr(func_name, args));
+}
+
+Expr * Parser::ParseMethodCallExpr ()
+{
+    Expr * idfier_expr = (new IdentifierExpr (m_Lexer.GetValue()));
+    Eat (Token :: IDENTIFIER);
+    Eat (Token :: DOT);
+    return (new MethodCallExpr (idfier_expr, ParseFuncCallExpr ()));
 }
 
 Stmt* Parser::Statement()
@@ -293,8 +305,8 @@ Stmt* Parser::ParseVarDecl()
 
 Stmt* Parser::ParseFuncDeclStmt()
 {
-    Advance();
-    Eat(Token::IDENTIFIER);
+    Eat (Token::FUNC);
+    Eat (Token::IDENTIFIER);
     std::string func_name = m_Lexer.GetValue();
 
     
@@ -325,15 +337,92 @@ Stmt* Parser::ParseBlockStmt()
     while(!Match(Token::R_BRACE))
     {
         block.push_back(Statement());
-        if(Match(Token::COMMA))
+        if(Match(Token::SEMICOLON))
         {
-            Eat(Token::COMMA);
+            Eat(Token::SEMICOLON);
         }
     }
     Eat(Token::R_BRACE);
     
     return (new BlockStmt(block));
 }
+
+
+Stmt* Parser::ParseStructDecl ()
+{
+    // Eat (Token::STRUCT);
+    // Var value = m_Lexer.GetValue();
+    // Eat (Token::IDENTIFIER);
+
+    // Eat (Token::L_BRACE);
+    // std::vector<std::unique_ptr<IdentifierExpr>> attributes;
+    // // std::unique_ptr<ConstructorDeclStmt> constructor;
+
+    // while (!Match(Token::R_BRACE))
+    // {
+    //     if (Match(Token::IDENTIFIER))
+    //     {
+    //         attributes.emplace_back(ParseIdentifierExpr());
+    //         if ( Match (Token::COMMA) )
+    //         {
+    //             Eat(Token::COMMA);
+    //         }
+    //         if (Match(Token::CONSTRUCTOR))
+    //         {
+                
+    //         }
+
+    //     }
+    // }
+    // Eat (Token::R_BRACE);
+    // return (new StructDeclStmt (std::string(value), nullptr, attributes));
+}
+
+Stmt* Parser::ParseStructBlockStmt ()
+{
+    Eat (Token::L_BRACE);
+    // std::vector<std::unique_ptr<IdentifierExpr>> attributes;
+    // std::unique_ptr<ConstructorDeclStmt> constructor;
+
+    // while (!Match(Token::R_BRACE))
+    // {
+    //     if (Match(Token::IDENTIFIER))
+    //     {
+    //         attributes.emplace_back(ParseIdentifierExpr());
+    //         if ( Match (Token::COMMA) )
+    //         {
+    //             Eat(Token::COMMA);
+    //         }
+    //         if (Match(Token::CONSTRUCTOR))
+    //         {
+                
+    //         }
+
+    //     }
+    // }
+    // Eat (Token::R_BRACE);
+    // return (new StructDeclStmt ())
+}
+
+Stmt* Parser::ParseConstructorDeclStmt ()
+{
+//     Eat (Token::CONSTRUCTOR);
+//     Eat (Token::L_PAREN);
+
+//     std::vector<std::string> args;
+//     while (!Match (Token::R_PAREN))
+//     {
+//         args.emplace_back (m_Lexer.GetValue());
+//         Eat(Token::IDENTIFIER);
+//         if(Match(Token::COMMA))
+//         {
+//             Eat(Token::COMMA);
+//         }
+//     }
+
+//     Eat(Token::R_PAREN);
+}
+
 
 void Parser::Eat(Token expected)
 {

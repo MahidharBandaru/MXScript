@@ -17,11 +17,12 @@ public:
 
 private:
 //  ExprVisitor
-    Var visit_LiteralExpr (LiteralExpr*) override;
-    Var visit_IdentifierExpr(IdentifierExpr*) override;
-    Var visit_BinaryExpr (BinaryExpr*) override;
-    Var visit_GroupExpr (GroupExpr*) override;
-    Var visit_FuncCallExpr (FuncCallExpr*) override;
+    void visit_LiteralExpr (LiteralExpr*) override;
+    void visit_IdentifierExpr(IdentifierExpr*) override;
+    void visit_BinaryExpr (BinaryExpr*) override;
+    void visit_GroupExpr (GroupExpr*) override;
+    void visit_FuncCallExpr (FuncCallExpr*) override;
+    void visit_MethodCallExpr (MethodCallExpr*) override;
 //  StmtVisitor
     void visit_ExprStmt (ExprStmt*) override;
     void visit_BlockStmt (BlockStmt*) override;
@@ -34,10 +35,11 @@ private:
 //  DeclVisitor
     void visit_VarDecl(VarDecl*) override;
     void visit_FuncDecl(FuncDecl*) override;
+    void visit_StructDecl (StructDecl *) override;
 
-
-    
+    // void MethodCallExpr (Object * o, FuncCallExpr * func_call_expr);
     Var Eval(Expr*);
+    Var m_ExprVal;
     void Execute(Stmt*);
 
     Env m_Env;

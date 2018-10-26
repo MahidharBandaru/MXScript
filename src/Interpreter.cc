@@ -11,8 +11,13 @@
 #include "TypeException.hh"
 #include "Return.hh"
 #include "Library.hh"
+#include "Object.hh"
 
 #define LOG(x) std::cout << x << std::endl;
+
+StructDecl * structtest = new StructDecl (std::string("Struct")
+                                        );
+
 
 Interpreter::Interpreter()
     : m_Env {
@@ -20,8 +25,14 @@ Interpreter::Interpreter()
         {"println", new BuiltInPrintLn()},
         {"input", new BuiltInInput()},
         {"int", new BuiltInInt()},
-        {"str", new BuiltInStr()}
-    } {}
+        {"str", new BuiltInStr()},
+        // {"Struct", new Struct (structtest)}
+    } {
+        Struct * test = new Struct (structtest);
+        (test -> m_Methods) . insert ({std::string("bark"), new BuiltInPrintLn()});
+        m_Env.insert ({"Struct", test});
+
+    }
 
 void Interpreter::Evaluate(std::string const& s)
 {
@@ -32,7 +43,7 @@ void Interpreter::Evaluate(std::string const& s)
     {
         Stmt* st = p.Parse();
         Execute(st);
-        delete st;
+        // delete st;
     }
     catch (const SyntaxException& e) 
     {
@@ -53,21 +64,21 @@ void Interpreter::Evaluate(std::string const& s)
     
 }
 
-Var Interpreter::visit_LiteralExpr(LiteralExpr* literal_expr)
+void Interpreter::visit_LiteralExpr(LiteralExpr* literal_expr)
 {
-    return literal_expr->m_Value;
+    m_ExprVal = literal_expr->m_Value;
 }
 
-Var Interpreter::visit_IdentifierExpr (IdentifierExpr* identifier_expr)
+void Interpreter::visit_IdentifierExpr (IdentifierExpr* identifier_expr)
 {
     std::string identifier_name = identifier_expr->m_IdentifierName;
     if (m_Env.find(identifier_name) == m_Env.end()) {
         throw SemanticException(SemanticError::UndeclaredVariable);
     }
-    return m_Env.at(identifier_name);
+    m_ExprVal = m_Env.at(identifier_name);
 }
 
-Var Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
+void Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
 {
 
     // HANDLE VAR EXCEPTIONS!!
@@ -78,40 +89,52 @@ Var Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
     Token op = binary_expr->m_Op;
     switch(op) {
         case (Token::OP_ADD) : {
-            return left+right;
+            m_ExprVal = left+right;
+            break;
         }
         case (Token::OP_SUB) : {
-            return left-right;
+            m_ExprVal = left-right;
+            break;
         }
         case (Token::OP_MUL) : {
-            return left*right;
+            m_ExprVal = left*right;
+            break;
         }
         case (Token::OP_DIV) : {
-            return left/right;
+            m_ExprVal = left/right;
+            break;
         }
         case (Token::OP_DEQ) : {
-            return left == right;
+            m_ExprVal = left == right;
+            break;
         }
         case Token::OR : {
-            return bool(left) || bool(right);
+            m_ExprVal = bool(left) || bool(right);
+            break;
         }
         case Token::AND : {
-            return bool(left) && bool(right);
+            m_ExprVal = bool(left) && bool(right);
+            break;
         }
         case (Token::OP_NEQ) : {
-            return left != right;
+            m_ExprVal = left != right;
+            break;
         }
         case (Token::OP_LT) : {
-            return left < right;
+            m_ExprVal = left < right;
+            break;
         }
         case (Token::OP_LTE) : {
-            return left <= right;
+            m_ExprVal = left <= right;
+            break;
         }
         case (Token::OP_GT) : {
-            return !(left <= right);
+            m_ExprVal = !(left <= right);
+            break;
         }
         case (Token::OP_GTE) : {
-            return !(left < right); //left >= right;
+            m_ExprVal = !(left < right); //left >= right;
+            break;
         }
         default : {
             throw SemanticException(SemanticError::UnknownOperation);
@@ -119,28 +142,29 @@ Var Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
     }
 }
 
-Var Interpreter::visit_GroupExpr(GroupExpr* group_expr)
+void Interpreter::visit_GroupExpr(GroupExpr* group_expr)
 {
-
-    return Eval(group_expr->m_Expr);
+    m_ExprVal = Eval(group_expr->m_Expr);
 }
 
-Var Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
+void Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
 {
     std::string func_name = func_call_expr->m_FuncName;
-
+    
     if(m_Env.find(func_name) == m_Env.end())
     {
         throw SemanticException(SemanticError::UndeclaredFunction);
     }
-    // if(!m_Env.at(func_name).IsCallable())
-    // {
-    //     std::cout << "Object not callable" << std::endl;
-    //     return Var();
-    // }
+    if(!m_Env.at(func_name).IsCallable())
+    {
+        std::cout << "Error: '" << func_name << "' " << "Object not callable" << std::endl;
+        m_ExprVal = Var();
+        return;
+    }
 
     auto function = (Callable*)m_Env.at(func_name);
-    auto& signature = function->m_FuncDecl->m_Signature;
+    auto signature = function->m_Decl->GetSignature();
+    
     auto& args = func_call_expr->m_Args;
 
 
@@ -150,16 +174,16 @@ Var Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
     }
 
     Env temp = m_Env;
-    auto it1 = signature.begin();
-    auto it2 = args.begin();
-    for(it1, it2; it1 != signature.end(); it1++, it2++)
-    {
 
+    auto it1 = signature.begin(); auto it2 = args.begin();
+    for(; it1 != signature.end(); it1++, it2++)
+    {
         std::string sig =*it1;
-        Var arg = (*it2)->Eval(this);
+        Var arg = Eval(*it2);
         
         m_Env.insert(std::make_pair(sig, arg));
     }
+
     Var res = Var();
     try
     {
@@ -174,11 +198,23 @@ Var Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
         LOG("Bad Types");
     }
     m_Env = temp;
-    return res;
+    // return res;
+    m_ExprVal = res;
+}
+
+void Interpreter::visit_MethodCallExpr (MethodCallExpr * method_call)
+{
+    Var object = Eval (method_call -> m_Object);
+    // Env temp = m_Env;
+    // m_Env += ((Object * )object)->m_Env;
+    // m_ExprVal = Eval (method_call->m_Method);
+    // m_Env = temp;
+    ((Object *)object)->call (this, (FuncCallExpr *)method_call->m_Method);
 }
 
 Var Interpreter::Eval(Expr* expr) {
-    return expr->Eval(this);
+    expr->Accept(this);
+    return m_ExprVal;
 }
 
 
@@ -201,13 +237,15 @@ void Interpreter::Execute(Stmt* s) {
 }
 
 void Interpreter::visit_ExprStmt(ExprStmt* expr_stmt) {
-    Var v = expr_stmt->m_Expr->Eval(this);
+    // Var v = expr_stmt->m_Expr->Eval(this);
+    Var v = Eval(expr_stmt->m_Expr);
     if(v.IsCallable()) {
         // IGNORE
     }
     else if(!v.IsNone()) {
         v.Print();
     }
+    // delete expr_stmt;
     std::cout << std::endl;
 }
 
@@ -233,22 +271,24 @@ void Interpreter::visit_BlockStmt(BlockStmt* block_stmt)
 
 void Interpreter::visit_WhileStmt (WhileStmt* while_stmt)
 {
-    while(bool(while_stmt->m_Condition->Eval(this)))
+    while(bool(Eval(while_stmt->m_Condition)))
     {
         while_stmt->m_Block->Execute(this);
     }
+    // delete while_stmt->m_Condition;
 }
 
 void Interpreter::visit_ReturnStmt (ReturnStmt* return_stmt)
 {
-    Var res = return_stmt->m_RetExpr->Eval(this);
+    Var res = Eval(return_stmt->m_RetExpr);
+    // delete return_stmt->m_RetExpr;
     throw ReturnException(res);
     
 }
 
 void Interpreter::visit_CondStmt (CondStmt* cond_stmt)
 {
-    bool cond = bool(cond_stmt->m_CondExpr->Eval(this));
+    bool cond = bool(Eval(cond_stmt->m_CondExpr));
     if(cond)
     {
         cond_stmt->m_IfBlock->Execute(this);
@@ -257,6 +297,7 @@ void Interpreter::visit_CondStmt (CondStmt* cond_stmt)
     {
         cond_stmt->m_ElseBlock->Execute(this);
     }
+    delete cond_stmt->m_CondExpr;
 }
 
 void Interpreter::visit_VarDeclStmt(VarDeclStmt* var_decl_stmt) {
@@ -270,7 +311,8 @@ void Interpreter::visit_FuncDeclStmt(FuncDeclStmt* func_decl_stmt)
 
 void Interpreter::visit_FuncCallStmt (FuncCallStmt* func_call_stmt)
 {
-    func_call_stmt->m_FuncCallExpr->Eval(this);
+    Eval(func_call_stmt->m_FuncCallExpr); //->Eval(this);
+    delete func_call_stmt->m_FuncCallExpr;
 }
 
 
@@ -291,8 +333,9 @@ void Interpreter::visit_VarDecl(VarDecl* var_decl)
 {
     m_Env.insert ({
         var_decl->m_VarName,
-        var_decl->m_Expr->Eval(this)
+        Eval(var_decl->m_Expr)
     });
+    delete var_decl->m_Expr;
 
 }
 
@@ -302,4 +345,11 @@ void Interpreter::visit_FuncDecl(FuncDecl* func_decl)
         func_decl->m_FuncName,
         new Function(func_decl)
     });
+}
+
+
+void Interpreter::visit_StructDecl (StructDecl * struct_decl)
+{
+    m_Env.insert ({struct_decl->m_StructName,
+                   new Struct (struct_decl)});
 }

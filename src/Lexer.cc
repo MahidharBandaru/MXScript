@@ -105,6 +105,14 @@ Token Lexer::Read() noexcept
             Advance();
             return Token::COMMA;
         }
+        case ';' : {
+            Advance();
+            return Token::SEMICOLON;
+        }
+        case '.' : {
+            Advance();
+            return Token::DOT;
+        }
         default: {
             if(isalpha(c)) {
                 return ReadIdentifier();

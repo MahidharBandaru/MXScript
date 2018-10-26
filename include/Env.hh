@@ -43,6 +43,13 @@ struct Env
     {
         m_Env.erase(s);
     }
+    Env& operator+= (Env const& other)
+    {
+        for (auto& e: other.m_Env)
+        {
+            insert (e);
+        }
+    }
 private:
     std::map<std::string, Var> m_Env;
     

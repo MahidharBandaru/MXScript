@@ -1,0 +1,29 @@
+struct Point {
+    attributes : cord_x, cord_y;
+
+
+    func get_x () {
+        return self.cord_x
+    }
+
+    func get_y () {
+        return self.cord_y
+    }
+
+    func __name__ () {
+        return ("{}, {}"%(self.cord_x, self.cord_y))
+    }
+
+
+    constructor (x, y) {
+        self.cord_x = x,
+        self.cord_y = y,
+    }
+}
+
+
+
+
+p = Point (12, 14)
+p.cord_x = 123;
+p.cord_y = 90;

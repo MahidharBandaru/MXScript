@@ -7,6 +7,7 @@
 #include <vector>
 
 struct Interpreter;
+struct Parser;
 struct Expr;
 
 struct Stmt {
@@ -35,19 +36,21 @@ private:
 
 
 
-struct FuncDeclStmt final : public Stmt
+struct FuncDeclStmt : public Stmt
 {
     FuncDeclStmt(std::string func_name, std::vector<std::string> args, Stmt* block)
         : m_FuncDecl(new FuncDecl(func_name, args, block)) {}
 
-    void Execute(StmtVisitor* v) override
+    virtual void Execute(StmtVisitor* v) override
     {
         v->visit_FuncDeclStmt(this);
     }
-private:
+    ~FuncDeclStmt () override {delete m_FuncDecl;}
+protected:
     FuncDecl* m_FuncDecl;
 
     friend Interpreter;
+    friend Parser;
 };
 
 
@@ -97,7 +100,8 @@ struct WhileStmt final : public Stmt
 
     ~WhileStmt() override
     {
-        delete m_Condition, m_Block;
+        delete m_Condition;
+        delete m_Block;
     }
     void Execute (StmtVisitor* sv) override
     {
@@ -109,18 +113,21 @@ struct WhileStmt final : public Stmt
 
 
 
-struct FuncCallStmt final : public Stmt
+struct CallStmt final : public Stmt
 {
-    FuncCallStmt(FuncCallExpr* func_call_expr)
-        : m_FuncCallExpr(func_call_expr) {}
+    CallStmt(CallExpr * call_expr)
+        : m_CallExpr (call_expr) {}
     
     void Execute (StmtVisitor* sv) override
     {
-        sv->visit_FuncCallStmt(this);
+        sv->visit_CallStmt(this);
     }
-
+    ~CallStmt () override
+    {
+        delete m_CallExpr;
+    }
 private:
-    FuncCallExpr* m_FuncCallExpr;
+    CallExpr* m_CallExpr;
 
     friend Interpreter;
 };
@@ -133,6 +140,10 @@ struct ReturnStmt final : public Stmt
     void Execute (StmtVisitor* sv) override
     {
         sv->visit_ReturnStmt(this);
+    }
+    ~ReturnStmt () override
+    {
+        delete m_RetExpr;
     }
     Expr* m_RetExpr;
 };
@@ -147,8 +158,48 @@ struct CondStmt final : public Stmt
     {
         sv->visit_CondStmt(this);
     }
-
+    ~CondStmt () override
+    {
+        delete m_CondExpr;
+        delete m_IfBlock;
+        delete m_ElseBlock;
+    }
 
     Expr* m_CondExpr;
     Stmt* m_IfBlock, *m_ElseBlock;
+};
+
+
+
+struct StructDeclStmt final : public Stmt
+{
+    StructDeclStmt (std::string struct_name,
+                    std::vector<FuncDecl *> & method_decls,
+                    FuncDecl * ctor_decl)
+        : m_StructDecl (new StructDecl (struct_name, method_decls, ctor_decl)) {}
+
+    void Execute (StmtVisitor* sv) override
+    {
+        sv->visit_StructDeclStmt (this);
+    }
+
+    StructDecl * m_StructDecl;
+};
+
+
+struct AttributeVarDeclStmt : public Stmt
+{
+    AttributeVarDeclStmt(Expr * access, Expr* expr)
+        : m_SelfVarDecl(new AttributeVarDecl(access, expr)) {}
+
+    void Execute(StmtVisitor* v) override {
+        v->visit_AttributeVarDeclStmt(this);
+    }
+    ~AttributeVarDeclStmt() override {
+        delete m_SelfVarDecl;
+    }
+private:
+    AttributeVarDecl* m_SelfVarDecl;
+
+    friend Interpreter;
 };

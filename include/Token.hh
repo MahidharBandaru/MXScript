@@ -16,8 +16,10 @@ enum class Token
     IDENTIFIER, NUMBER, STRING, INT, FLOAT,
     
     // KeyWords
-    FUNC, RETURN, LET, IF, ELSE, IS, OR, AND, WHILE, BREAK,
-    EOL,
+    FUNC, RETURN, LET, IF, ELSE, IS, OR, AND, WHILE, BREAK, STRUCT, CONSTRUCTOR, SELF,
+    
+    //MISC
+    SEMICOLON, DOT, EOL,
 
     INVALID
 };

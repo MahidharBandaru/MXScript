@@ -5,4 +5,5 @@ enum class Type {
         Double,
         String,
         Callable,
+        Object
     };

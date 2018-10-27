@@ -1,0 +1,23 @@
+struct Point {
+    constructor (x, y) {
+        self.x = x;
+        self.y = y;
+    }
+
+    @ Notice the 'P' is in caps, conflict will be handled better in the next update.
+    func Print () {
+        print(self.x);
+        print(' ');
+        println(self.y);
+    }
+
+    func dist (p) {
+        a = sqrt((self.x - p.x)*(self.x-p.x) + (self.y-p.y)*(self.y-p.y));
+        return a;
+    }
+}
+
+p = Point (12, 14)
+a = Point(2, 3);
+
+println(p.dist(a));

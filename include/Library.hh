@@ -1,20 +1,18 @@
 #pragma  once
 
-/*
- * Input
- * Output
- */
 #include "Decl.hh"
 #include "Callable.hh"
 #include "Interpreter.hh"
 
 #include <string>
+#include <cmath>
 
-FuncDecl* BuiltInPrintDecl = new FuncDecl(std::string("print"), {std::string("x")}, {});
-FuncDecl* BuiltInPrintLnDecl = new FuncDecl(std::string("println"), {std::string("x")}, {});
-FuncDecl* BuiltInInputDecl = new FuncDecl(std::string("input"), {}, {});
-FuncDecl* BuiltInIntDecl = new FuncDecl(std::string("int"), {std::string("x")}, {});
-FuncDecl* BuiltInStrDecl = new FuncDecl(std::string("str"), {std::string("x")}, {});
+FuncDecl * BuiltInPrintDecl = new FuncDecl(std::string("print"), {std::string("x")}, {});
+FuncDecl * BuiltInPrintLnDecl = new FuncDecl(std::string("println"), {std::string("x")}, {});
+FuncDecl * BuiltInInputDecl = new FuncDecl(std::string("input"), {}, {});
+FuncDecl * BuiltInIntDecl = new FuncDecl(std::string("int"), {std::string("x")}, {});
+FuncDecl * BuiltInStrDecl = new FuncDecl(std::string("str"), {std::string("x")}, {});
+FuncDecl * BuiltInSqrtDecl = new FuncDecl (std::string("sqrt"), {std::string("x")}, {});
 
 std::string const arg {"x"};
 
@@ -40,7 +38,7 @@ struct BuiltInPrintLn : public Callable
     Var call (Interpreter* i) override
     {
         i->m_Env.at(arg).Print();
-        LOG("")
+        std::cout << '\n';
         return Var();
     }
 };
@@ -81,5 +79,16 @@ struct BuiltInStr : public Callable
     Var call (Interpreter* i) override
     {
         return Var(std::string(i->m_Env.at(arg)));
+    }
+};
+
+struct BuiltInSqrt : public Callable
+{
+    BuiltInSqrt ()
+        : Callable (BuiltInSqrtDecl) {}
+    
+    Var call (Interpreter* i) override
+    {
+        return Var(std::sqrt(int(i->m_Env.at(arg))));
     }
 };

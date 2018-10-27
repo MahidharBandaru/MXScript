@@ -3,13 +3,15 @@
 #include "Var.hh"
 #include "Visitor.hh"
 
-#define LOG(x)  std::cout << x << std::endl;
+#define LOG(x)  std::cout << x << '\n';
 
 enum class Token;
 struct Interpreter;
+struct Object;
+struct IRCodeGen;
 
 struct Expr {
-    virtual Var Eval(ExprVisitor*) = 0;
+    virtual void Accept(ExprVisitor*) = 0;
     virtual ~Expr() {}
 };
 
@@ -18,44 +20,48 @@ struct LiteralExpr : public Expr
     explicit LiteralExpr(Var const& value)
         : m_Value(value) {}
 
-    Var Eval(ExprVisitor* v) override
+    void Accept(ExprVisitor* v) override
     {
-        return v->visit_LiteralExpr(this);
+        v->visit_LiteralExpr(this);
     }
     ~LiteralExpr() override = default;
 private:
     Var m_Value;
 
     friend Interpreter;
+    friend IRCodeGen;
 };
 
 struct IdentifierExpr : public Expr{
     explicit IdentifierExpr(std::string const& name)
         : m_IdentifierName(name) {}
 
-    Var Eval(ExprVisitor* v) override
+    void Accept(ExprVisitor* v) override
     {
-        return v->visit_IdentifierExpr(this);
+        v->visit_IdentifierExpr(this);
     }
     ~IdentifierExpr() override = default;
 private:
     std::string m_IdentifierName;
 
     friend Interpreter;
+    friend IRCodeGen;
+    friend Object;
 };
 
 struct BinaryExpr : public Expr {
     explicit BinaryExpr(Expr* left, Token op, Expr* right)
         : m_Left(left), m_Op(op), m_Right(right) {}
 
-    Var Eval(ExprVisitor* v) override
+    void Accept(ExprVisitor* v) override
     {
-        return v->visit_BinaryExpr(this);
+        v->visit_BinaryExpr(this);
     }
 
     ~BinaryExpr() override
     {
-        delete m_Left, m_Right;
+        delete m_Left;
+        delete m_Right;
     }
 
 private:
@@ -63,6 +69,7 @@ private:
     Token m_Op;
 
     friend Interpreter;
+    friend IRCodeGen;
 };
 
 struct GroupExpr : public Expr {
@@ -71,9 +78,9 @@ struct GroupExpr : public Expr {
     explicit GroupExpr(Expr* expr)
         : m_Expr(expr) {}
 
-    Var Eval(ExprVisitor* v) override
+    void Accept(ExprVisitor* v) override
     {
-        return v->visit_GroupExpr(this);
+        v->visit_GroupExpr(this);
     }
     ~GroupExpr() override
     {
@@ -83,15 +90,15 @@ private:
     Expr* m_Expr;
 };
 
-struct FuncCallExpr final : public Expr {
-    explicit FuncCallExpr(std::string func_name, std::vector<Expr*> args)
-        : m_FuncName(func_name), m_Args(std::move(args)) {}
+struct CallExpr final : public Expr {
+    explicit CallExpr(std::string call_name, std::vector<Expr*> args)
+        : m_CallName(call_name), m_Args(std::move(args)) {}
 
-    Var Eval(ExprVisitor* v) override
+    void Accept(ExprVisitor* v) override
     {
-        return v->visit_FuncCallExpr(this);
+        v->visit_CallExpr(this);
     }
-    ~FuncCallExpr() override
+    ~CallExpr() override
     {
         for(auto& e : m_Args)
         {
@@ -100,8 +107,26 @@ struct FuncCallExpr final : public Expr {
         m_Args.clear();
     }
 private:
-    std::string m_FuncName;
+    std::string m_CallName;
     std::vector<Expr*> m_Args;
 
-    friend Interpreter;    
+    friend Interpreter;
+    friend Object;
+};
+
+struct AttributeAccessExpr : public Expr
+{
+    AttributeAccessExpr (Expr * object, Expr * method)
+        : m_Object (object), m_Attribute (method) {}
+    
+    void Accept (ExprVisitor * v) override
+    {
+        v->visit_AttributeAccessExpr (this);
+    }
+    ~AttributeAccessExpr ()
+    {
+        delete m_Object;
+        delete m_Attribute;
+    }
+    Expr * m_Object, * m_Attribute;
 };

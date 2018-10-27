@@ -4,7 +4,7 @@
 #include <sstream>
 
 enum class SemanticError {
-    UndeclaredVariable,
+    UndeclaredIdentifier,
     UndeclaredFunction,
     UnknownOperation,
 };

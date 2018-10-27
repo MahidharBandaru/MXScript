@@ -3,7 +3,7 @@
 #include "Var.hh"
 #include "Visitor.hh"
 
-#define LOG(x)  std::cout << x << std::endl;
+#define LOG(x)  std::cout << x << '\n';
 
 enum class Token;
 struct Interpreter;
@@ -46,6 +46,7 @@ private:
 
     friend Interpreter;
     friend IRCodeGen;
+    friend Object;
 };
 
 struct BinaryExpr : public Expr {
@@ -59,7 +60,8 @@ struct BinaryExpr : public Expr {
 
     ~BinaryExpr() override
     {
-        delete m_Left, m_Right;
+        delete m_Left;
+        delete m_Right;
     }
 
 private:
@@ -88,15 +90,15 @@ private:
     Expr* m_Expr;
 };
 
-struct FuncCallExpr final : public Expr {
-    explicit FuncCallExpr(std::string func_name, std::vector<Expr*> args)
-        : m_FuncName(func_name), m_Args(std::move(args)) {}
+struct CallExpr final : public Expr {
+    explicit CallExpr(std::string call_name, std::vector<Expr*> args)
+        : m_CallName(call_name), m_Args(std::move(args)) {}
 
     void Accept(ExprVisitor* v) override
     {
-        v->visit_FuncCallExpr(this);
+        v->visit_CallExpr(this);
     }
-    ~FuncCallExpr() override
+    ~CallExpr() override
     {
         for(auto& e : m_Args)
         {
@@ -105,25 +107,26 @@ struct FuncCallExpr final : public Expr {
         m_Args.clear();
     }
 private:
-    std::string m_FuncName;
+    std::string m_CallName;
     std::vector<Expr*> m_Args;
 
     friend Interpreter;
     friend Object;
 };
 
-struct MethodCallExpr : public Expr
+struct AttributeAccessExpr : public Expr
 {
-    MethodCallExpr (Expr * object, Expr * method)
-        : m_Object (object), m_Method (method) {}
+    AttributeAccessExpr (Expr * object, Expr * method)
+        : m_Object (object), m_Attribute (method) {}
     
     void Accept (ExprVisitor * v) override
     {
-        v->visit_MethodCallExpr (this);
+        v->visit_AttributeAccessExpr (this);
     }
-    ~MethodCallExpr ()
+    ~AttributeAccessExpr ()
     {
-        delete m_Object, m_Method;
+        delete m_Object;
+        delete m_Attribute;
     }
-    Expr * m_Object, * m_Method;
+    Expr * m_Object, * m_Attribute;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Var.hh"
+#include "Env.hh"
 
 #include <map>
 
@@ -9,16 +10,14 @@ struct FuncDecl;
 struct StructDecl;
 struct Interpreter;
 
-#define LOG(x) std::cout << x << std::endl;
+#define LOG(x) std::cout << x << '\n';
 
 struct Callable
 {
     Callable();
-    // explicit Callable(FuncDecl* f);
     explicit Callable (Decl *);
     virtual Var call(Interpreter* i) = 0;
 
-    // FuncDecl* m_FuncDecl;
     Decl * m_Decl;
 };
 
@@ -31,11 +30,11 @@ struct Function : public Callable
 
 struct Struct : public Callable
 {
-    explicit Struct (StructDecl *);
+    Struct (StructDecl *);
 
     Var call (Interpreter *) override;
     Callable * fetch (std::string &) const;
     
-    std::shared_ptr <StructDecl> m_StructDecl;
-    std::map <std::string, Callable*> m_Methods;
+    Function * m_Ctor;
+    Env m_Env;
 };

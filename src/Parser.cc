@@ -126,13 +126,13 @@ Expr* Parser::Primary() {
         case (Token::IDENTIFIER) : {
             if(Peek(Token::L_PAREN))
             {
-                ex = ParseFuncCallExpr();
+                ex = ParseCallExpr();
                 // Advance();
             }
-            else if (Peek(Token::DOT))
-            {
-                ex = ParseMethodCallExpr ();
-            }
+            // else if (Peek(Token::DOT))
+            // {
+            //     ex = ParseAttributeAccessExpr ();
+            // }
             else
             {
                 // std::string s = std::string(m_Lexer.GetValue());
@@ -158,7 +158,30 @@ Expr* Parser::Primary() {
         }
 
     }
+    if (Match (Token::DOT))
+    {
+        ex = new AttributeAccessExpr (ex, ParseAttributeAccessExpr());
+    }
     return ex;
+}
+
+Expr * Parser :: ParseAttributeAccessExpr ()
+{
+    // Expr * object = ParseIdentifierExpr ();
+
+    Eat (Token::DOT);
+    Expr * attr;
+    if (Peek (Token::L_PAREN))
+    {
+        attr = ParseCallExpr ();
+    }
+    else
+    {
+        attr = ParseIdentifierExpr ();
+    }
+
+    return attr;
+    // return (new AttributeAccessExpr (object, attr));
 }
 
 Expr* Parser::ParseIdentifierExpr()
@@ -169,7 +192,7 @@ Expr* Parser::ParseIdentifierExpr()
     return (new IdentifierExpr(s));
 }
 
-Expr* Parser::ParseFuncCallExpr()
+Expr* Parser::ParseCallExpr()
 {
     std::string func_name(m_Lexer.GetValue());
     Eat(Token::IDENTIFIER);
@@ -185,15 +208,15 @@ Expr* Parser::ParseFuncCallExpr()
         }
     }
     Eat(Token::R_PAREN);
-    return (new FuncCallExpr(func_name, args));
+    return (new CallExpr(func_name, args));
 }
 
 Expr * Parser::ParseMethodCallExpr ()
 {
-    Expr * idfier_expr = (new IdentifierExpr (m_Lexer.GetValue()));
-    Eat (Token :: IDENTIFIER);
-    Eat (Token :: DOT);
-    return (new MethodCallExpr (idfier_expr, ParseFuncCallExpr ()));
+    // Expr * idfier_expr = (new IdentifierExpr (m_Lexer.GetValue()));
+    // Eat (Token :: IDENTIFIER);
+    // Eat (Token :: DOT);
+    // return (new MethodCallExpr (idfier_expr, ParseFuncCallExpr ()));
 }
 
 Stmt* Parser::Statement()
@@ -206,9 +229,34 @@ Stmt* Parser::Statement()
         }
         else if (Peek(Token::L_PAREN))
         {
-            return ParseFuncCallStmt();
+            return ParseCallStmt();
+        }
+        else if (Peek (Token::DOT))
+        {
+            Expr * access = Primary ();
+            if (Match (Token::EQ))
+            {
+                Eat (Token::EQ);
+                Expr * val = Expression ();
+            return (new AttributeVarDeclStmt (access, val));
+            }
+            return (new ExprStmt (access));
+            // return (new VarDeclStmt (expr, ParseAttributeAccessExpr ()));
         }
     }
+    // else if (Match (Token::SELF))
+    // {
+    //     Eat (Token::SELF);
+    //     Eat (Token::DOT);
+    //     if (Peek (Token::L_PAREN))
+    //     {
+    //         return  ParseSelfFuncCall ();
+    //     }
+    //     else
+    //     {
+    //         return ParseSelfVarDecl ();
+    //     }
+    // }
     else if(Match(Token::WHILE))
     {
         return ParseWhileStmt();
@@ -228,6 +276,10 @@ Stmt* Parser::Statement()
     else if(Match(Token::IF))
     {
         return ParseCondStmt();
+    }
+    else if (Match (Token::STRUCT))
+    {
+        return  ParseStructDecl ();
     }
     else
     {
@@ -263,7 +315,7 @@ Stmt* Parser::ParseCondStmt()
     return (new CondStmt(cond_expr, if_block, else_block));
 }
 
-Stmt* Parser::ParseFuncCallStmt ()
+Stmt* Parser::ParseCallStmt ()
 {
     std::string func_name = m_Lexer.GetValue();    
     Eat(Token::IDENTIFIER);
@@ -280,7 +332,7 @@ Stmt* Parser::ParseFuncCallStmt ()
     }
     Eat(Token::R_PAREN);
 
-    return (new FuncCallStmt(new FuncCallExpr(func_name, args)));
+    return (new CallStmt(new CallExpr(func_name, args)));
 }
 
 Stmt* Parser::ParseWhileStmt()
@@ -350,31 +402,29 @@ Stmt* Parser::ParseBlockStmt()
 
 Stmt* Parser::ParseStructDecl ()
 {
-    // Eat (Token::STRUCT);
-    // Var value = m_Lexer.GetValue();
-    // Eat (Token::IDENTIFIER);
+    Eat (Token::STRUCT);
+    Var struct_name = std::string(m_Lexer.GetValue());
+    Eat (Token::IDENTIFIER);
 
-    // Eat (Token::L_BRACE);
+    Eat (Token::L_BRACE);
     // std::vector<std::unique_ptr<IdentifierExpr>> attributes;
     // // std::unique_ptr<ConstructorDeclStmt> constructor;
-
-    // while (!Match(Token::R_BRACE))
-    // {
-    //     if (Match(Token::IDENTIFIER))
-    //     {
-    //         attributes.emplace_back(ParseIdentifierExpr());
-    //         if ( Match (Token::COMMA) )
-    //         {
-    //             Eat(Token::COMMA);
-    //         }
-    //         if (Match(Token::CONSTRUCTOR))
-    //         {
-                
-    //         }
-
-    //     }
-    // }
-    // Eat (Token::R_BRACE);
+    std::vector <FuncDecl *> methods;
+    FuncDecl * ctor_decl = nullptr;
+    while (!Match(Token::R_BRACE))
+    {
+        if (Match (Token::FUNC))
+        {
+            methods.emplace_back (static_cast<FuncDeclStmt*> (ParseFuncDeclStmt ()) -> m_FuncDecl);
+        }
+        if (Match (Token::CONSTRUCTOR))
+        {
+            ctor_decl = (static_cast <FuncDeclStmt *> (ParseConstructorDeclStmt())) -> m_FuncDecl;
+            methods.emplace_back (ctor_decl);
+        }
+    }
+    Eat (Token::R_BRACE);
+    return (new StructDeclStmt (struct_name, methods, ctor_decl));
     // return (new StructDeclStmt (std::string(value), nullptr, attributes));
 }
 
@@ -406,23 +456,33 @@ Stmt* Parser::ParseStructBlockStmt ()
 
 Stmt* Parser::ParseConstructorDeclStmt ()
 {
-//     Eat (Token::CONSTRUCTOR);
-//     Eat (Token::L_PAREN);
+    Eat (Token::CONSTRUCTOR);
+    Eat (Token::L_PAREN);
 
-//     std::vector<std::string> args;
-//     while (!Match (Token::R_PAREN))
-//     {
-//         args.emplace_back (m_Lexer.GetValue());
-//         Eat(Token::IDENTIFIER);
-//         if(Match(Token::COMMA))
-//         {
-//             Eat(Token::COMMA);
-//         }
-//     }
+    std::vector<std::string> args;
+    while (!Match (Token::R_PAREN))
+    {
+        args.emplace_back (m_Lexer.GetValue());
+        Eat(Token::IDENTIFIER);
+        if(Match(Token::COMMA))
+        {
+            Eat(Token::COMMA);
+        }
+    }
 
-//     Eat(Token::R_PAREN);
+    Eat(Token::R_PAREN);
+
+    return (new FuncDeclStmt (std::string ("constructor"), args, ParseBlockStmt ()));
 }
 
+// Stmt * Parser::ParseSelfVarDecl ()
+// {
+//     std::string var_name = std::string(m_Lexer.GetValue());
+//     Eat(Token::IDENTIFIER);
+//     Eat(Token::EQ);
+
+//     return (new SelfVarDeclStmt (var_name, Expression ()));
+// }
 
 void Parser::Eat(Token expected)
 {

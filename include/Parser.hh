@@ -23,11 +23,12 @@ private:
     Expr* Addition();
     Expr* Expression();
     Expr* ComparatorExpr();
-    Expr* ParseFuncCallExpr();
+    Expr* ParseCallExpr();
     Expr* ParseLiteralExpr();
     Expr* ParseIdentifierExpr();
     Expr * ParseMethodCallExpr ();
-    
+    Expr * ParseAttributeAccessExpr ();
+
     Stmt* Statement();
     Stmt* ParseExprStmt();
     Stmt* ParseWhileStmt();
@@ -36,10 +37,11 @@ private:
     Stmt* ParseCondStmt();
     Stmt* ParseFuncDeclStmt();
     Stmt* ParseBlockStmt();
-    Stmt* ParseFuncCallStmt();
+    Stmt* ParseCallStmt();
     Stmt* ParseStructDecl();
     Stmt* ParseStructBlockStmt();
     Stmt* ParseConstructorDeclStmt();
-
+    Stmt * ParseSelfVarDecl ();
+    Stmt * ParseSelfFuncCall ();
     void Eat(Token);
 };

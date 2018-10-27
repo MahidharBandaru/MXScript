@@ -15,6 +15,7 @@ add_executable(MX
         include/Keywords.hh
         include/Lexer.hh
         include/Library.hh
+        include/Object.hh
         include/Parser.hh
         include/Return.hh
         include/SemanticException.hh

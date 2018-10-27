@@ -15,24 +15,16 @@
 
 #define LOG(x) std::cout << x << std::endl;
 
-StructDecl * structtest = new StructDecl (std::string("Struct")
-                                        );
-
 
 Interpreter::Interpreter()
-    : m_Env {
+    : m_GEnv {
         {"print", new BuiltInPrint()},
         {"println", new BuiltInPrintLn()},
         {"input", new BuiltInInput()},
         {"int", new BuiltInInt()},
         {"str", new BuiltInStr()},
-        // {"Struct", new Struct (structtest)}
-    } {
-        Struct * test = new Struct (structtest);
-        (test -> m_Methods) . insert ({std::string("bark"), new BuiltInPrintLn()});
-        m_Env.insert ({"Struct", test});
-
-    }
+        {"sqrt", new BuiltInSqrt()}
+    } {}
 
 void Interpreter::Evaluate(std::string const& s)
 {
@@ -43,7 +35,7 @@ void Interpreter::Evaluate(std::string const& s)
     {
         Stmt* st = p.Parse();
         Execute(st);
-        // delete st;
+        delete st;
     }
     catch (const SyntaxException& e) 
     {
@@ -72,10 +64,20 @@ void Interpreter::visit_LiteralExpr(LiteralExpr* literal_expr)
 void Interpreter::visit_IdentifierExpr (IdentifierExpr* identifier_expr)
 {
     std::string identifier_name = identifier_expr->m_IdentifierName;
-    if (m_Env.find(identifier_name) == m_Env.end()) {
-        throw SemanticException(SemanticError::UndeclaredVariable);
+    auto loc = m_Env.find (identifier_name);
+    auto glo = m_GEnv.find (identifier_name);
+    if (loc == m_Env.end() && glo == m_GEnv.end()) {
+        throw SemanticException(SemanticError::UndeclaredIdentifier);
     }
-    m_ExprVal = m_Env.at(identifier_name);
+    if(loc == m_Env.end())
+    {
+        if(glo == m_GEnv.end()) throw SemanticException (SemanticError::UndeclaredIdentifier);
+        m_ExprVal = glo->second;
+    }
+    else
+    {
+        m_ExprVal = loc->second;
+    }
 }
 
 void Interpreter::visit_BinaryExpr(BinaryExpr* binary_expr)
@@ -147,25 +149,31 @@ void Interpreter::visit_GroupExpr(GroupExpr* group_expr)
     m_ExprVal = Eval(group_expr->m_Expr);
 }
 
-void Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
+void Interpreter::visit_CallExpr(CallExpr* func_call_expr)
 {
-    std::string func_name = func_call_expr->m_FuncName;
+    std::string func_name = func_call_expr->m_CallName;
     
-    if(m_Env.find(func_name) == m_Env.end())
+    if(m_GEnv.find(func_name) == m_GEnv.end())
     {
         throw SemanticException(SemanticError::UndeclaredFunction);
     }
-    if(!m_Env.at(func_name).IsCallable())
-    {
-        std::cout << "Error: '" << func_name << "' " << "Object not callable" << std::endl;
-        m_ExprVal = Var();
-        return;
-    }
 
-    auto function = (Callable*)m_Env.at(func_name);
+    m_ExprVal = visit_Callable(m_GEnv.at (func_name), func_call_expr->m_Args);
+}
+
+Var Interpreter::visit_Callable(Callable * function, std::vector<Expr*>& args)
+{
+    // if(!m_Env.at(func_name).IsCallable())
+    // {
+    //     std::cout << "Error: '" << func_name << "' " << "Object not callable" << std::endl;
+    //     m_ExprVal = Var();
+    //     return;
+    // }
+
+    // auto function = (Callable*)m_GEnv.at(func_name);
     auto signature = function->m_Decl->GetSignature();
     
-    auto& args = func_call_expr->m_Args;
+    // auto& args = func_call_expr->m_Args;
 
 
     if( signature.size() != args.size())
@@ -173,21 +181,23 @@ void Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
         throw SemanticException(SemanticError::UnknownOperation);
     }
 
-    Env temp = m_Env;
-
+    // Env temp = m_Env;
+    Env func_env = m_GEnv;
     auto it1 = signature.begin(); auto it2 = args.begin();
     for(; it1 != signature.end(); it1++, it2++)
     {
         std::string sig =*it1;
         Var arg = Eval(*it2);
-        
-        m_Env.insert(std::make_pair(sig, arg));
+        func_env.insert(std::make_pair(sig, arg));
     }
 
     Var res = Var();
+    Callable * c = function; //((Callable*)(m_GEnv.at(func_name)));
+    Env temp = m_Env;
+    m_Env = func_env;
     try
     {
-        res =  ((Callable*)(m_Env.at(func_name)))->call(this);
+        res =  c->call(this);
 
     } catch (std::bad_variant_access& e)
     {
@@ -198,18 +208,25 @@ void Interpreter::visit_FuncCallExpr(FuncCallExpr* func_call_expr)
         LOG("Bad Types");
     }
     m_Env = temp;
-    // return res;
-    m_ExprVal = res;
+    
+    return res;
 }
 
-void Interpreter::visit_MethodCallExpr (MethodCallExpr * method_call)
+void Interpreter::visit_AttributeAccessExpr (AttributeAccessExpr * attr_access_expr)
 {
-    Var object = Eval (method_call -> m_Object);
-    // Env temp = m_Env;
-    // m_Env += ((Object * )object)->m_Env;
-    // m_ExprVal = Eval (method_call->m_Method);
-    // m_Env = temp;
-    ((Object *)object)->call (this, (FuncCallExpr *)method_call->m_Method);
+    Var object = Eval (attr_access_expr -> m_Object);
+    try {
+        auto func = static_cast<CallExpr *> (attr_access_expr->m_Attribute);
+        m_ExprVal = ((Object *)object) -> call (this, func);
+    } catch (std::out_of_range & e)
+    {
+        try {
+            m_ExprVal = ((Object *)object)->call (this, static_cast<IdentifierExpr*> (attr_access_expr->m_Attribute));
+        } catch (std::exception & e)
+        {
+            LOG(e.what());
+        }
+    }
 }
 
 Var Interpreter::Eval(Expr* expr) {
@@ -246,7 +263,7 @@ void Interpreter::visit_ExprStmt(ExprStmt* expr_stmt) {
         v.Print();
     }
     // delete expr_stmt;
-    std::cout << std::endl;
+    // std::cout << std::endl;
 }
 
 void Interpreter::visit_BlockStmt(BlockStmt* block_stmt)
@@ -276,11 +293,13 @@ void Interpreter::visit_WhileStmt (WhileStmt* while_stmt)
         while_stmt->m_Block->Execute(this);
     }
     // delete while_stmt->m_Condition;
+    // delete while_stmt->m_Block;
 }
 
 void Interpreter::visit_ReturnStmt (ReturnStmt* return_stmt)
 {
-    Var res = Eval(return_stmt->m_RetExpr);
+    Var res;
+    if(return_stmt->m_RetExpr)  res = Eval (return_stmt->m_RetExpr);
     // delete return_stmt->m_RetExpr;
     throw ReturnException(res);
     
@@ -297,7 +316,6 @@ void Interpreter::visit_CondStmt (CondStmt* cond_stmt)
     {
         cond_stmt->m_ElseBlock->Execute(this);
     }
-    delete cond_stmt->m_CondExpr;
 }
 
 void Interpreter::visit_VarDeclStmt(VarDeclStmt* var_decl_stmt) {
@@ -309,13 +327,21 @@ void Interpreter::visit_FuncDeclStmt(FuncDeclStmt* func_decl_stmt)
     func_decl_stmt->m_FuncDecl->Declare(this);
 }
 
-void Interpreter::visit_FuncCallStmt (FuncCallStmt* func_call_stmt)
+void Interpreter::visit_StructDeclStmt(StructDeclStmt* struct_decl_stmt)
 {
-    Eval(func_call_stmt->m_FuncCallExpr); //->Eval(this);
-    delete func_call_stmt->m_FuncCallExpr;
+    struct_decl_stmt->m_StructDecl->Declare(this);
 }
 
+void Interpreter::visit_CallStmt (CallStmt* call_stmt)
+{
+    Eval(call_stmt->m_CallExpr); //->Eval(this);
+    // delete func_call_stmt->m_FuncCallExpr;
+}
 
+void Interpreter::visit_AttributeVarDeclStmt (AttributeVarDeclStmt * attr_decl)
+{
+    attr_decl->m_SelfVarDecl->Declare (this);
+}
 
 
 
@@ -335,13 +361,13 @@ void Interpreter::visit_VarDecl(VarDecl* var_decl)
         var_decl->m_VarName,
         Eval(var_decl->m_Expr)
     });
-    delete var_decl->m_Expr;
+    // delete var_decl->m_Expr;
 
 }
 
 void Interpreter::visit_FuncDecl(FuncDecl* func_decl)
 {
-    m_Env.insert({
+    m_GEnv.insert({
         func_decl->m_FuncName,
         new Function(func_decl)
     });
@@ -350,6 +376,24 @@ void Interpreter::visit_FuncDecl(FuncDecl* func_decl)
 
 void Interpreter::visit_StructDecl (StructDecl * struct_decl)
 {
-    m_Env.insert ({struct_decl->m_StructName,
+    m_GEnv.insert ({struct_decl->m_StructName,
                    new Struct (struct_decl)});
+}
+
+void Interpreter::visit_AttributeVarDecl (AttributeVarDecl * attr_var_decl)
+{
+    auto access = static_cast<AttributeAccessExpr *> (attr_var_decl -> m_Access);
+    Var ob = Eval (access->m_Object);
+    auto idfier_expr = static_cast<IdentifierExpr *> (access->m_Attribute);
+    std::string attr= idfier_expr -> m_IdentifierName;
+    
+    Var val = Eval (attr_var_decl -> m_Expr);
+    try
+    {
+        ((Object *) ob) -> set (this, attr, val);
+    }
+    catch (std::exception & e)
+    {
+        LOG("NOT AN OBJECT");
+    }
 }

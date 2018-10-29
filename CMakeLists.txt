@@ -27,6 +27,7 @@ add_executable(MX
         include/Var.hh
         include/Visitor.hh
         src/Callable.cc
+        src/Decl.cc
         src/Interpreter.cc
         src/Lexer.cc
         src/main.cc

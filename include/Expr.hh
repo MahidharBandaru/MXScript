@@ -3,8 +3,6 @@
 #include "Var.hh"
 #include "Visitor.hh"
 
-#define LOG(x)  std::cout << x << '\n';
-
 enum class Token;
 struct Interpreter;
 struct Object;

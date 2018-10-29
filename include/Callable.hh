@@ -10,8 +10,6 @@ struct FuncDecl;
 struct StructDecl;
 struct Interpreter;
 
-#define LOG(x) std::cout << x << '\n';
-
 struct Callable
 {
     Callable();

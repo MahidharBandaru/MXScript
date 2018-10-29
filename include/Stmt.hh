@@ -16,8 +16,6 @@ struct Stmt {
     friend Interpreter;
 };
 
-
-
 struct VarDeclStmt final : public Stmt {
     VarDeclStmt(std::string var_name, Expr* expr)
         : m_VarDecl(new VarDecl(var_name, expr)) {}

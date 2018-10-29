@@ -1,2 +1,5 @@
-- Structs
+- Error Handling (Improve quality of Error Messages)
 - Garbage Collection
+- Arrays, String Objects
+- For loops (Highly expressible)
+- Inheritance

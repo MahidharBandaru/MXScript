@@ -24,7 +24,7 @@ private:
     std::string m_Src;
 
     const size_t m_end;
-    size_t m_current;
+    size_t m_current, m_LineNo;
 
     void SkipWhiteSpace() noexcept;
     Token ReadString() noexcept;

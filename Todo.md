@@ -1,5 +1,6 @@
 - Error Handling (Improve quality of Error Messages)
-- Garbage Collection
+- Optimizers
 - Arrays, String Objects
+- Garbage Collection
 - For loops (Highly expressible)
 - Inheritance

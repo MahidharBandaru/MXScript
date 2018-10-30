@@ -118,6 +118,16 @@ Expr* Parser::Primary() {
             Advance();
             break;
         }
+        case Token::OP_SUB : {
+            Advance ();
+            ex = new UnaryExpr (Token::OP_SUB, Primary ());
+            break;
+        }
+        case Token::OP_ADD : {
+            Advance ();
+            ex = new UnaryExpr (Token::OP_ADD, Primary ());
+            break;
+        }
         case (Token::STRING) : {
             ex = (new LiteralExpr(m_Lexer.GetValue()));    
             Advance();

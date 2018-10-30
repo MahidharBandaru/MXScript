@@ -29,8 +29,9 @@ Var Function::call (Interpreter* i)
 
 // Struct
 Struct::Struct (StructDecl * struct_decl)
-    : Callable (struct_decl), m_Ctor (new Function (struct_decl->m_CtorDecl)) {
+    : Callable (struct_decl) {
         // m_CtorDecl = struct_decl->m_CtorDecl;
+        if (struct_decl->m_CtorDecl)    m_Ctor = new Function (struct_decl->m_CtorDecl);
         auto & func_decls = struct_decl->m_MethodDecls;
         for(auto & e: func_decls)
         {

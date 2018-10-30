@@ -6,7 +6,7 @@
 Lexer::Lexer(const std::string& s) noexcept
     : m_Src(s), m_end(s.size())
 {
-    m_current = 0;
+    m_current = 0, m_LineNo = 1;
 }
 
 Token Lexer::Peek() noexcept

@@ -13,6 +13,23 @@ struct Expr {
     virtual ~Expr() {}
 };
 
+struct UnaryExpr : public Expr
+{
+    explicit UnaryExpr (Token op, Expr * expr)
+        : m_Op (op), m_Expr (expr) {}
+    
+    void Accept (ExprVisitor * v) override
+    {
+        v->visit_UnaryExpr (this);
+    }
+    ~UnaryExpr () override {delete m_Expr;}
+private:
+    Token m_Op;
+    Expr * m_Expr;
+
+    friend Interpreter;
+    friend IRCodeGen;
+};
 struct LiteralExpr : public Expr
 {
     explicit LiteralExpr(Var const& value)

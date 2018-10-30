@@ -61,6 +61,21 @@ void Interpreter::visit_LiteralExpr(LiteralExpr* literal_expr)
     m_ExprVal = literal_expr->m_Value;
 }
 
+void Interpreter::visit_UnaryExpr(UnaryExpr * unary_expr)
+{
+    Var val = Eval (unary_expr->m_Expr);
+    switch (unary_expr->m_Op)
+    {
+        case Token::OP_ADD : {
+            m_ExprVal = val;
+            return;
+        }
+        case Token::OP_SUB : {
+            m_ExprVal = -1 * int(val);
+        }
+    }
+}
+
 void Interpreter::visit_IdentifierExpr (IdentifierExpr* identifier_expr)
 {
     std::string identifier_name = identifier_expr->m_IdentifierName;
@@ -163,18 +178,7 @@ void Interpreter::visit_CallExpr(CallExpr* func_call_expr)
 
 Var Interpreter::visit_Callable(Callable * function, std::vector<Expr*>& args)
 {
-    // if(!m_Env.at(func_name).IsCallable())
-    // {
-    //     std::cout << "Error: '" << func_name << "' " << "Object not callable" << std::endl;
-    //     m_ExprVal = Var();
-    //     return;
-    // }
-
-    // auto function = (Callable*)m_GEnv.at(func_name);
     auto signature = function->m_Decl->GetSignature();
-    
-    // auto& args = func_call_expr->m_Args;
-
 
     if( signature.size() != args.size())
     {
@@ -260,7 +264,7 @@ void Interpreter::visit_ExprStmt(ExprStmt* expr_stmt) {
         // IGNORE
     }
     else if(!v.IsNone()) {
-        v.Print();
+        // v.Print();
     }
     // delete expr_stmt;
     // std::cout << std::endl;
@@ -357,11 +361,21 @@ void Interpreter::visit_AttributeVarDeclStmt (AttributeVarDeclStmt * attr_decl)
 
 void Interpreter::visit_VarDecl(VarDecl* var_decl)
 {
-    m_Env.insert ({
-        var_decl->m_VarName,
-        Eval(var_decl->m_Expr)
-    });
-    // delete var_decl->m_Expr;
+    Var val = Eval(var_decl->m_Expr);
+    if(val.IsCallable())
+    {
+        m_GEnv.insert ({
+            var_decl->m_VarName,
+            val
+        });
+    }
+    else
+    {
+        m_Env.insert ({
+            var_decl->m_VarName,
+            val
+        });
+    }
 
 }
 

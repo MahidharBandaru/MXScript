@@ -19,6 +19,7 @@ public:
 private:
 //  ExprVisitor
     void visit_LiteralExpr (LiteralExpr*) override;
+    void visit_UnaryExpr(UnaryExpr *) override;
     void visit_IdentifierExpr(IdentifierExpr*) override;
     void visit_BinaryExpr (BinaryExpr*) override;
     void visit_GroupExpr (GroupExpr*) override;

@@ -4,6 +4,7 @@ struct Var;
 
 struct Expr;
 struct LiteralExpr;
+struct UnaryExpr;
 struct IdentifierExpr;
 struct BinaryExpr;
 struct GroupExpr;
@@ -12,6 +13,7 @@ struct AttributeAccessExpr;
 
 struct ExprVisitor {
     virtual void visit_LiteralExpr(LiteralExpr*) = 0;
+    virtual void visit_UnaryExpr (UnaryExpr *) = 0;
     virtual void visit_IdentifierExpr(IdentifierExpr*) = 0;
     virtual void visit_BinaryExpr(BinaryExpr*) = 0;
     virtual void visit_GroupExpr(GroupExpr*) = 0;

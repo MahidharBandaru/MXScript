@@ -16,7 +16,7 @@ struct Object
         : m_Struct (struc)
     {
         Function * f = m_Struct->m_Ctor;
-
+        if (f == nullptr)   return;
         Env g = i->m_GEnv;
         i->m_GEnv += m_Env;
         i->m_GEnv += m_Struct->m_Env;
@@ -36,6 +36,7 @@ struct Object
         {
             throw std::out_of_range("out of range");
         }
+        if (c == nullptr)   return Var();
         Env g = i->m_GEnv;
         i->m_GEnv += m_Env;
         i->m_GEnv += m_Struct->m_Env;

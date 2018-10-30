@@ -36,9 +36,11 @@ StructDecl::~StructDecl ()
     {
         delete e;
     }
-    delete m_CtorDecl;
+    if (m_CtorDecl)
+        delete m_CtorDecl;
 }
 std::vector<std::string> StructDecl::GetSignature () const
 {
+    if(!m_CtorDecl) return  {};
     return m_CtorDecl->GetSignature();
 }

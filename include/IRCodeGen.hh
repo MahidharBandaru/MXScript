@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Visitor.hh"
 #include "Expr.hh"
 #include "Var.hh"

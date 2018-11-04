@@ -1,4 +1,8 @@
-#pragma once
+#ifndef TOKEN_HH
+#define TOKEN_HH
+
+#include <map>
+#include <string>
 
 enum class Token
 {
@@ -23,3 +27,16 @@ enum class Token
 
     INVALID
 };
+
+static std::map <Token, std::string> tok_table {
+    {Token :: L_PAREN , std::string("(")},
+    {Token :: R_PAREN, std::string(")")},
+    {Token :: SEMICOLON , std::string(";")}
+};
+static std::ostream & operator << (std::ostream & os, Token const& t)
+{
+    os << tok_table[t];
+}
+
+
+#endif

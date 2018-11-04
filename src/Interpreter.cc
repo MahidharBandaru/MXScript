@@ -26,7 +26,7 @@ Interpreter::Interpreter()
         {"sqrt", new BuiltInSqrt()}
     } {}
 
-void Interpreter::Evaluate(std::string const& s)
+void Interpreter::Evaluate(std::string & s)
 {
     Lexer l(s);
     Parser p(l);

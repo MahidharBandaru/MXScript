@@ -1,4 +1,4 @@
-@ The following function evaluates to the factorial of the given number.
+# The following function evaluates to the factorial of the given number.
 
 func fac(n)
 {
@@ -9,13 +9,13 @@ func fac(n)
     return n*fac(n-1)
 }
 
-@ Input is taken as a raw string
-@ To pass integers as parameters, use int() to make the type conversion
+# Input is taken as a raw string
+# To pass integers as parameters, use int() to make the type conversion
 
 println(fac(int(input())))
 
 
-@ The same function implemented using a while loop
+# The same function implemented using a while loop
 
 func fac(n)
 {
@@ -32,8 +32,8 @@ func fac(n)
 println(fac(int(input())))
 
 
-@ Another simple function that returns the sum of the two parameters.
-@ When two strings are passed, their concatenation is computed.
+# Another simple function that returns the sum of the two parameters.
+# When two strings are passed, their concatenation is computed.
 
 func sum(x, y) {return x+y}
 println(sum('abc', 'def'))

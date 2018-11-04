@@ -18,6 +18,7 @@ private:
     bool Peek(Token) noexcept;
     bool Match(Token) noexcept;
     void Eat(Token);
+    void ThrowError (std::stringstream & );
 
     Expr * Primary();
     Expr * Factor();

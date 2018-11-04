@@ -14,7 +14,7 @@ struct Interpreter final: public ExprVisitor, StmtVisitor, DeclVisitor
 {
 public:
     Interpreter();
-    void Evaluate(std::string const& s);
+    void Evaluate(std::string & s);
 
 private:
 //  ExprVisitor

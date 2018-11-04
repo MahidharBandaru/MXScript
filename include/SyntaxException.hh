@@ -10,10 +10,8 @@ enum class SyntaxError {
 
 class SyntaxException : public std::exception {
 public:
-    SyntaxException(SyntaxError error, Token t)
+    SyntaxException(std::stringstream & ss, std::pair <size_t, size_t> cursor)
     {
-        std::stringstream ss;
-        ss << "SyntaxError: " << (int)error << " Token: " << (int)t;
         m_Msg = (ss.str());
     }
 

@@ -4,7 +4,7 @@ struct Point {
         self.y = y;
     }
 
-    @ Notice the 'P' is in caps, conflict will be handled better in the next update.
+    # let's print!
     func Print () {
         print(self.x);
         print(' ');

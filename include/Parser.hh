@@ -2,23 +2,26 @@
 
 #include "Lexer.hh"
 
+#include <unordered_set>
+
 struct Stmt;
 struct Expr;
-
+enum class SyntaxError;
 struct Parser {
     explicit Parser (Lexer const& l) noexcept;
     
-    Stmt* Parse();
+    std::vector<Stmt*> Parse();
 
 private:
     Lexer m_Lexer;
     Token m_CurrentToken;
+    Position m_PrevPos;
 
     void Advance() noexcept;
     bool Peek(Token) noexcept;
     bool Match(Token) noexcept;
     void Eat(Token);
-    void ThrowError (std::stringstream & );
+    void ThrowError (SyntaxError, std::stringstream & );
 
     Expr * Primary();
     Expr * Factor();
@@ -38,7 +41,7 @@ private:
     Stmt * ParseReturnStmt();
     Stmt * ParseCondStmt();
     Stmt * ParseFuncDeclStmt();
-    Stmt * ParseBlockStmt();
+    Stmt * ParseBlockStmt(std::unordered_set <Token> const&);
     Stmt * ParseCallStmt();
     Stmt * ParseStructDecl();
     Stmt * ParseStructBlockStmt();

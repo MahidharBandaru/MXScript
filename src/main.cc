@@ -1,5 +1,4 @@
 #include "Interpreter.hh"
-// #include "../include/FileMap.hh"
 
 #include <fstream>
 #include <iterator>
@@ -20,8 +19,6 @@ int main(int argc, char** argv) {
     std::string str(static_cast<std::stringstream const&>(std::stringstream() << fs.rdbuf()).str()); 
 
     std::string s (str.begin(), str.end());
-    // s.insert(s.begin(), '{');
-    // s.insert(s.end(), '}');
     
     i.Evaluate(s);
 

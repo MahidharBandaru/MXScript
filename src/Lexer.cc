@@ -4,154 +4,148 @@
 #define LOG(x)  std::cout << x << std::endl;
 
 Lexer::Lexer (std::string& s) noexcept
-    :  m_Src(std::move(s)), m_end(m_Src.size() + 4)
+    :  m_Src(std::move(s)), m_end(m_Src.size())
 {
-    m_Src.insert (m_Src.begin(), {'{', '\n'});
-    m_Src.insert (m_Src.end(), {'\n', '}'});
-    m_current = 0, m_LineNo = 0, m_Pos = 0;
+    m_current = 0, m_Prev = 0;
+    m_Position = {1, 0};
 }
 
 void Lexer::ReadLineComment () noexcept
 {
-    while (m_current < m_end && m_Src.at(m_current) != '\n')    {Advance();}
+    while (!AtEnd () && GetCurrentChar () != '\n')    {Advance();}
 }
 void Lexer::ReadBlockComment () noexcept
 {
-
+    // TBI
 }
 
-std::pair <size_t, size_t> Lexer::GetCursor () const noexcept
+Position Lexer::GetPosition () const noexcept
 {
-    return  {m_LineNo, m_Pos};
+    return m_Position;
 }
 
 std::string Lexer::GetCurrTokText () const noexcept
 {
-    return m_CurrTok;
+    return m_Src.substr (m_Prev, m_current-m_Prev);
 }
 
 Token Lexer::Peek() noexcept
 {
-    size_t curr_pos = m_current, pos = m_Pos, line_no = m_LineNo;
+    size_t curr_pos = m_current, prev_pos = m_Prev;
+    auto pos = m_Position;
     Var curr_val = m_value;
 
     Token next = Read();
     
-    m_current = curr_pos, m_Pos = pos, m_LineNo = line_no;
+    m_current = curr_pos;
     m_value = curr_val;
-    
+    m_Position = pos;
+    m_Prev = prev_pos;
+
     return next;
 }
 
 Token Lexer::Read() noexcept
 {
-    m_CurrTok = "";
+    
     SkipWhiteSpace();
-    if (m_current >= m_end)
-    {
-        return  Token::EOL;
-    }
 
-    char c = m_Src[m_current];
+    auto c = GetCurrentChar ();
     if (c == '#')
     {
         ReadLineComment ();
-        m_Pos = 0;
     }
-
-    if (c == '\n')
-    {
-        Advance ();
-        m_LineNo++;
-        m_Pos = 0;
-        return Read ();
-    }
-    if (AtEnd ())
-    {
-        return  Token::EOL;
-    }
-
-    c = m_Src[m_current];
+    c = GetCurrentChar ();
+    m_Prev = m_current;
     switch (c)
     {
+        case '\0' : {
+            return  Token :: EOL;
+        }
+        case '\n' : {
+            Advance ();
+            m_Position.ColNo = 0;
+            m_Position.LineNo++;
+            return  Read();
+        }
         case '+' : {
-            Advance(); m_CurrTok = "+";
+            Advance();
             return Token::OP_ADD;
         }
         case '-' : {
-            Advance(); m_CurrTok = "-";
+            Advance();
             return Token::OP_SUB;
         }
         case '*' : {
-            Advance(); m_CurrTok = "*";
+            Advance();
             return Token::OP_MUL;
         }
         case '/' : {
-            Advance(); m_CurrTok = "/";
+            Advance();
             return Token::OP_DIV;
         }
         case '=' : {
             if(Peek('=')) {
                 Advance();
-                Advance(); m_CurrTok = "==";
+                Advance();
                 return Token::OP_DEQ;
             }
-            Advance(); m_CurrTok = "=";
+            Advance();
             return Token::EQ;
         }
         case '<' : {
             if(Peek('=')) {
-                Advance(); Advance();  m_CurrTok = "<=";
+                Advance(); Advance();
                 return Token::OP_LTE;
             }
-            Advance(); m_CurrTok = "<";
+            Advance();
             return Token::OP_LT;
         }
         case '!' : {
             if(Peek('=')) {
-                Advance(); Advance(); m_CurrTok = "!=";
+                Advance(); Advance();
                 return Token::OP_NEQ;
             }
-            Advance(); m_CurrTok = "!";
+            Advance();
             return Token::INVALID;
         }
         case '>' : {
             if(Peek('=')) {
-                Advance(); Advance(); m_CurrTok = ">=";
+                Advance(); Advance();
                 return Token::OP_GTE;
             }
-            Advance(); m_CurrTok = ">";
+            Advance();
             return Token::OP_GT;
         }
         case '(': {
-            Advance(); m_CurrTok = "(";
+            Advance();
             return Token::L_PAREN;
         }
         case ')': {
-            Advance(); m_CurrTok = ")";
+            Advance();
             return Token::R_PAREN;
         }
         case '{': {
-            Advance(); m_CurrTok = "{";
+            Advance();
             return Token::L_BRACE;
+        }
+        case '}': {
+            Advance();
+            return Token::R_BRACE;
         }
         case '\'': {
             return ReadString();
         }
-        case '}': {
-            Advance(); m_CurrTok = "}";
-            return Token::R_BRACE;
-        }
         case ',': {
-            Advance(); m_CurrTok = ",";
+            Advance();
             return Token::COMMA;
         }
         case ';' : {
-            Advance(); m_CurrTok = ";";
+            Advance();
             return Token::SEMICOLON;
         }
         case '.' : {
-            Advance(); m_CurrTok = ".";
+            Advance();
             return Token::DOT;
         }
         default: {
@@ -169,14 +163,17 @@ Token Lexer::Read() noexcept
 
 }
 
-inline void Lexer::Advance() noexcept {m_current++, m_Pos++;}
+inline void Lexer::Advance() noexcept {
+    m_current++;
+    m_Position.ColNo++;
+}
 
 void Lexer::SkipWhiteSpace() noexcept
 {
-    while(!AtEnd () &&  m_Src[m_current] == ' ') {Advance();}
+    while(!AtEnd () && GetCurrentChar () == ' ') {Advance();}
 }
 
-inline bool Lexer::AtEnd () noexcept {return (m_current >= m_end);}
+inline bool Lexer::AtEnd () const noexcept {return (m_current >= m_end);}
 
 bool Lexer::Peek(const char c) noexcept
 {
@@ -186,10 +183,11 @@ bool Lexer::Peek(const char c) noexcept
 Token Lexer::ReadString() noexcept {
     Advance();
     m_value = Var(std::string(""));
-    while(m_Src[m_current] != '\'') {
-        m_value += m_Src[m_current];
-
-        m_current++;
+    auto c = GetCurrentChar ();
+    while(c != '\'') {
+        m_value += c;
+        Advance ();
+        c = GetCurrentChar ();
     }
     Advance();
     return Token::STRING;
@@ -203,23 +201,20 @@ Token Lexer::ReadNumber() noexcept
         Advance();
     }
     m_value = Var(i);
-    m_CurrTok = std::string(m_value);
     return Token::INT;
 }
 
 Token Lexer::ReadIdentifier() noexcept
 {
-    char c = m_Src[m_current];
+    char c = GetCurrentChar ();
     std::string s;
 
-    while( (c >= 'a' && c <= 'z')
-        || (c >= 'A' && c <= 'Z')
+    while( isalnum (c)
         ||  c == '_') {
             s += c;
-            m_current++;
+            Advance ();
             c = m_Src[m_current];
         }
-    m_CurrTok = s;
     auto it = keywords.find(s);
     if(it == keywords.end()) {
         m_value = Var(s);
@@ -230,3 +225,9 @@ Token Lexer::ReadIdentifier() noexcept
 }
 
 Var Lexer::GetValue() const noexcept {return m_value;}
+
+char Lexer::GetCurrentChar () const noexcept
+{
+    if (AtEnd ())   return '\0';
+    return m_Src[m_current];
+}

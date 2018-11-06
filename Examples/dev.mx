@@ -1,20 +1,4 @@
-func get ()
-{
-    return 4;
-};
+a = 12;
+b = 123;
 
-println(get ());
-
-func get () {
-    a = input();
-};
-
-
-struct f {
-    func al () {
-        return 12;
-    }
-    constructor () {
-        
-    }
-}
+println (a * b * int (input()));

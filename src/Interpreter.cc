@@ -33,11 +33,18 @@ void Interpreter::Evaluate(std::string & s)
     
     try
     {
-        Stmt* st = p.Parse();
-        Execute(st);
-        delete st;
+        auto st = p.Parse();
+        for (auto & e : st)
+        {
+            Execute (e);
+        }
+        // CHANGE
+        for (auto & e : st)
+        {
+            delete e;
+        }
     }
-    catch (const SyntaxException& e) 
+    catch (const SyntaxException& e)
     {
         const char * c = e.what();
         std::cout << c << std::endl;

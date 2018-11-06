@@ -4,7 +4,7 @@ struct Point {
         self.y = y;
     }
 
-    # let's print!
+    # let's print
     func Print () {
         print(self.x);
         print(' ');
@@ -17,7 +17,7 @@ struct Point {
     }
 }
 
-p = Point (12, 14)
+p = Point (12, 14);
 a = Point(2, 3);
 
 println(p.dist(a));

@@ -1,10 +1,13 @@
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "Token.hh"
 #include "Var.hh"
+
+#include <string>
+
+struct Position {
+    size_t LineNo = 1, ColNo = 0;
+};
 
 struct Lexer {
     
@@ -18,15 +21,17 @@ struct Lexer {
     Token Read() noexcept;
     Token Peek() noexcept;
     Var GetValue() const noexcept;
-    std::pair <size_t, size_t> GetCursor () const noexcept;
+    Position GetPosition () const noexcept;
     std::string GetCurrTokText () const noexcept;
+    inline bool AtEnd () const noexcept;
 
 private:
     Var m_value;
-    std::string m_Src, m_CurrTok;
+    std::string m_Src;
 
     const size_t m_end;
-    size_t m_current, m_LineNo, m_Pos;
+    size_t m_current, m_Prev;
+    Position m_Position;
 
     void SkipWhiteSpace() noexcept;
     void ReadLineComment () noexcept;
@@ -37,6 +42,6 @@ private:
     Token ReadIdentifier() noexcept;
 
     inline void Advance() noexcept;
-    inline bool AtEnd () noexcept;
     bool Peek(char c) noexcept;
+    char GetCurrentChar () const noexcept;
 };

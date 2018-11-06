@@ -10,7 +10,7 @@ enum class SyntaxError {
 
 class SyntaxException : public std::exception {
 public:
-    SyntaxException(std::stringstream & ss, std::pair <size_t, size_t> cursor)
+    SyntaxException(std::stringstream & ss)
     {
         m_Msg = (ss.str());
     }

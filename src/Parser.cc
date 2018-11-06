@@ -1,20 +1,31 @@
 #include "Parser.hh"
+
 #include "Expr.hh"
 #include "Stmt.hh"
 #include "SyntaxException.hh"
+
+#include <vector>
 
 #define LOG(x)  std::cout << x << std::endl;
 
 Parser::Parser(Lexer const& l) noexcept: m_Lexer(l)
 {
+    m_PrevPos = {1, 0};
     Advance();
 }
 
-Stmt* Parser::Parse() {
-    return Statement();
+std::vector<Stmt*> Parser::Parse() {
+    std::vector <Stmt *> stmts;
+    while (!m_Lexer.AtEnd ())
+    {
+        stmts.push_back (Statement ());
+    }
+    
+    return stmts;
 }
 
 void Parser::Advance() noexcept {
+    m_PrevPos = m_Lexer.GetPosition ();
     m_CurrentToken = m_Lexer.Read();
 }
 
@@ -26,13 +37,27 @@ bool Parser::Peek(Token t) noexcept {
     return  (m_Lexer.Peek() == t);
 }
 
-void Parser::ThrowError (std::stringstream & se)
+void Parser::ThrowError (SyntaxError s, std::stringstream & se)
 {
     std::stringstream ss;
-    auto pos = m_Lexer.GetCursor();
-    ss << "Syntax Error: " << "Line: " << pos.first << " Column: " << pos.second << '\n';
+    auto pos = m_PrevPos;
+    ss << "Syntax Error: " << "Line: ";
+    switch (s) {
+        case SyntaxError :: InvalidToken : {
+            // ss << pos.first << " Column: " << pos.second + 1;
+            // ss << pos.LineNo << " Column: " << pos.ColNo + 1;
+            ss << m_Lexer.GetPosition () .LineNo << " Column: " << m_Lexer.GetPosition () . ColNo + 1;
+            break;
+        }
+        case SyntaxError :: UnexpectedToken : {
+            ss << pos.LineNo << " Column: " << pos.ColNo + 1;
+            // ss << m_Lexer.GetCursor () .first << " Column: " << m_Lexer.GetCursor () . second + 1;
+        }
+            
+    }
+    ss << '\n';
     ss << se.str();
-    throw SyntaxException (ss, m_Lexer.GetCursor () );
+    throw SyntaxException (ss);
 }
 
 Expr* Parser::Expression()
@@ -89,7 +114,7 @@ Expr* Parser::ComparatorExpr() {
             // throw SyntaxException(SyntaxError::InvalidToken, m_CurrentToken, m_Lexer.GetCursor ());
             std::stringstream ss;
             ss << "Invalid Token : " << m_Lexer.GetCurrTokText() << '\n';
-            ThrowError (ss);
+            ThrowError (SyntaxError :: InvalidToken , ss);
         }
         default : {
             // throw SyntaxException(SyntaxError::UnexpectedToken, m_CurrentToken);
@@ -174,7 +199,7 @@ Expr* Parser::Primary() {
             // throw SyntaxException(SyntaxError::InvalidToken, m_CurrentToken);
             std::stringstream ss;
             ss << "Invalid Token : " << m_Lexer.GetCurrTokText() << '\n';
-            ThrowError (ss);
+            ThrowError (SyntaxError :: InvalidToken, ss);
         }
         default : {
             break;
@@ -262,8 +287,10 @@ Stmt* Parser::Statement()
             {
                 Eat (Token::EQ);
                 Expr * val = Expression ();
+                Eat (Token::SEMICOLON);
             return (new AttributeVarDeclStmt (access, val));
             }
+            Eat (Token :: SEMICOLON);
             return (new ExprStmt (access));
             // return (new VarDeclStmt (expr, ParseAttributeAccessExpr ()));
         }
@@ -291,7 +318,7 @@ Stmt* Parser::Statement()
     }
     else if (Match(Token::L_BRACE))
     {
-        return ParseBlockStmt();
+        return ParseBlockStmt({});
     }
     else if(Match(Token::RETURN))
     {
@@ -307,36 +334,42 @@ Stmt* Parser::Statement()
     }
     else
     {
+        return ParseExprStmt();
         // throw SyntaxException(SyntaxError::UnexpectedToken, m_CurrentToken);
         std::stringstream ss;
         ss << "Unexpected Token : '" << m_Lexer.GetCurrTokText() << "'\n";
-        ThrowError (ss);
+        ThrowError (SyntaxError :: UnexpectedToken , ss);
     }
 
-    return ParseExprStmt();
 }
 
 Stmt* Parser::ParseExprStmt()
 {
-    return (new ExprStmt(Expression()));
+    Expr * expr = Expression ();
+    Eat (Token::SEMICOLON);
+    return (new ExprStmt (expr));
 }
 
 Stmt* Parser::ParseReturnStmt()
 {
     Eat(Token::RETURN);
-    return (new ReturnStmt(Expression()));
+
+    Expr * expr = Expression ();
+    Eat (Token::SEMICOLON);
+
+    return (new ReturnStmt(expr));
 }
 
 Stmt* Parser::ParseCondStmt()
 {
     Eat(Token::IF);
     Expr* cond_expr = Expression();
-    Stmt* if_block = ParseBlockStmt(), *else_block = nullptr;
+    Stmt* if_block = ParseBlockStmt({Token::FUNC, Token::STRUCT}), *else_block = nullptr;
 
     if(Match(Token::ELSE))
     {
         Advance();
-        else_block = ParseBlockStmt();
+        else_block = ParseBlockStmt({Token::FUNC, Token::STRUCT});
     }
 
     return (new CondStmt(cond_expr, if_block, else_block));
@@ -357,7 +390,7 @@ Stmt* Parser::ParseCallStmt ()
             Eat(Token::COMMA);
         }
     }
-    Eat(Token::R_PAREN);
+    Eat(Token::R_PAREN); Eat (Token::SEMICOLON);
 
     return (new CallStmt(new CallExpr(func_name, args)));
 }
@@ -369,7 +402,7 @@ Stmt* Parser::ParseWhileStmt()
     Expr* condition = Expression();
     Eat(Token::R_PAREN);
 
-    return (new WhileStmt(condition, ParseBlockStmt()));
+    return (new WhileStmt(condition, ParseBlockStmt({Token::FUNC, Token::STRUCT})));
 }
 
 Stmt* Parser::ParseVarDecl()
@@ -378,7 +411,9 @@ Stmt* Parser::ParseVarDecl()
     Eat(Token::IDENTIFIER);
     Eat(Token::EQ);
     
-    return (new VarDeclStmt(var_name, Expression()));
+    Expr * expr = Expression ();
+    Eat (Token::SEMICOLON);
+    return (new VarDeclStmt(var_name, expr));
 }
 
 
@@ -404,22 +439,28 @@ Stmt* Parser::ParseFuncDeclStmt()
 
     Eat(Token::R_PAREN);
 
-    
-    return (new FuncDeclStmt(func_name, args, ParseBlockStmt()));
+    Stmt * func_block = ParseBlockStmt ({Token::FUNC, Token::STRUCT});
+
+    return (new FuncDeclStmt(func_name, args, func_block));
 }
 
-
-Stmt* Parser::ParseBlockStmt()
+Stmt* Parser::ParseBlockStmt(std::unordered_set <Token> const& ignores)
 {
     Eat(Token::L_BRACE);
     std::vector<Stmt*> block;
     while(!Match(Token::R_BRACE))
     {
-        block.push_back(Statement());
-        if(!Match (Token::R_BRACE))
+        if (ignores.find (m_CurrentToken) != ignores.end())
         {
-            Eat(Token::SEMICOLON);
+            std::stringstream ss;
+            ss << "Unexpected Token: '" << m_Lexer.GetCurrTokText () << "'\n";
+            ThrowError (SyntaxError :: UnexpectedToken , ss);
         }
+        block.push_back(Statement());
+        // if(!Match (Token::R_BRACE))
+        // {
+        //     Eat(Token::SEMICOLON);
+        // }
     }
     Eat(Token::R_BRACE);
     
@@ -499,7 +540,7 @@ Stmt* Parser::ParseConstructorDeclStmt ()
 
     Eat(Token::R_PAREN);
 
-    return (new FuncDeclStmt (std::string ("constructor"), args, ParseBlockStmt ()));
+    return (new FuncDeclStmt (std::string ("constructor"), args, ParseBlockStmt ({Token::STRUCT, Token::FUNC})));
 }
 
 // Stmt * Parser::ParseSelfVarDecl ()
@@ -519,6 +560,16 @@ void Parser::Eat(Token expected)
         return;
     }
     std::stringstream ss;
-    ss << "Expected: '" << expected << "'\n";
-    ThrowError (ss);
+    SyntaxError se;
+    if (m_CurrentToken == Token :: INVALID)
+    {
+        ss << "Invalid Token: '" << m_Lexer.GetCurrTokText () << "'\n";
+        se = SyntaxError :: InvalidToken;
+    }
+    else
+    {
+        ss << "Expected: '" << expected << "'\n";
+        se = SyntaxError :: UnexpectedToken;
+    }
+    ThrowError (se, ss);
 }

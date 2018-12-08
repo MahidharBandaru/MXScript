@@ -3,6 +3,7 @@
 #include "Decl.hh"
 #include "Callable.hh"
 #include "Interpreter.hh"
+#include "Object.hh"
 
 #include <string>
 #include <cmath>
@@ -37,7 +38,10 @@ struct BuiltInPrintLn : public Callable
 
     Var call (Interpreter* i) override
     {
-        i->m_Env.at(arg).Print();
+        auto x = i->m_Env.at(arg);
+        if(x.IsObject ()) {
+            std::cout << ((Object*) x)->bark ();
+        }
         std::cout << '\n';
         return Var();
     }

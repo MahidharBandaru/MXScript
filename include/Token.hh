@@ -31,7 +31,9 @@ enum class Token
 static std::map <Token, std::string> tok_table {
     {Token :: L_PAREN , std::string("(")},
     {Token :: R_PAREN, std::string(")")},
-    {Token :: SEMICOLON , std::string(";")}
+    {Token :: SEMICOLON , std::string(";")},
+    {Token :: DOT , std::string(".")},
+    {Token :: IDENTIFIER , std::string("id")},
 };
 static std::ostream & operator << (std::ostream & os, Token const& t)
 {

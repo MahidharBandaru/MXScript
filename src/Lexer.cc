@@ -173,8 +173,6 @@ void Lexer::SkipWhiteSpace() noexcept
     while(!AtEnd () && GetCurrentChar () == ' ') {Advance();}
 }
 
-inline bool Lexer::AtEnd () const noexcept {return (m_current >= m_end);}
-
 bool Lexer::Peek(const char c) noexcept
 {
     return AtEnd() ? false : (c == m_Src.at(m_current+1));

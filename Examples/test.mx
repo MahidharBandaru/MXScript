@@ -1,39 +1,35 @@
 # The following function evaluates to the factorial of the given number.
 
-func fac(n)
-{
-    if n is 1
-    {
-        return n
-    }
-    return n*fac(n-1)
+func fac (n) {
+    if (n is 1) {return 1;}
+    return n*fac(n-1);
 }
-
 # Input is taken as a raw string
 # To pass integers as parameters, use int() to make the type conversion
 
-println(fac(int(input())))
+println(fac(int(input())));
 
 
 # The same function implemented using a while loop
 
 func fac(n)
 {
-    res = 1
-    i = 2
+    res = 1;
+    i = 2;
     while(i <= n)
     {
-        res = res * i
-        i = i + 1
+        res = res * i;
+        i = i + 1;
     }
-    return res
+    return res;
 }
 
-println(fac(int(input())))
+println(fac(int(input())));
 
 
 # Another simple function that returns the sum of the two parameters.
 # When two strings are passed, their concatenation is computed.
 
-func sum(x, y) {return x+y}
-println(sum('abc', 'def'))
+func sum(x, y) {return x+y;}
+
+println(sum('123', 'abc'));

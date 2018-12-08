@@ -33,6 +33,10 @@ struct Struct : public Callable
     Var call (Interpreter *) override;
     Callable * fetch (std::string &) const;
     
+    std::string get_name () const noexcept {
+        return m_Name;
+    }
     Function * m_Ctor;
+    std::string m_Name;
     Env m_Env;
 };

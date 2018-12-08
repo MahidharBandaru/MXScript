@@ -1,4 +1,33 @@
-a = 12;
-b = 123;
+struct myint {
+    constructor (a) {
+        self.a = a;
+    }
+    func print () {
+        println (self.a);
+    }
+}
 
-println (a * b * int (input()));
+struct Point {
+    constructor (A, B) {
+        self.A = A;
+        self.B = B;
+    }
+    func print () {
+        println (self.A.a);
+    }
+}
+struct Line {
+    constructor (A, B) {
+        self.A = A;
+        self.B = B;
+    }
+}
+x = myint (4);
+y = myint (6);
+
+
+p1 = Point (x, y);
+p2 = Point (y, x);
+l = Line (p1, p2);
+
+println(l.A.A);

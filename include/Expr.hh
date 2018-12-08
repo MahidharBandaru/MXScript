@@ -7,6 +7,7 @@ enum class Token;
 struct Interpreter;
 struct Object;
 struct IRCodeGen;
+struct PrettyPrinter;
 
 struct Expr {
     virtual void Accept(ExprVisitor*) = 0;
@@ -29,6 +30,8 @@ private:
 
     friend Interpreter;
     friend IRCodeGen;
+
+    friend PrettyPrinter;
 };
 struct LiteralExpr : public Expr
 {
@@ -45,6 +48,8 @@ private:
 
     friend Interpreter;
     friend IRCodeGen;
+
+    friend PrettyPrinter;
 };
 
 struct IdentifierExpr : public Expr{
@@ -62,6 +67,8 @@ private:
     friend Interpreter;
     friend IRCodeGen;
     friend Object;
+
+    friend PrettyPrinter;
 };
 
 struct BinaryExpr : public Expr {
@@ -85,6 +92,8 @@ private:
 
     friend Interpreter;
     friend IRCodeGen;
+
+    friend PrettyPrinter;
 };
 
 struct GroupExpr : public Expr {
@@ -103,6 +112,8 @@ struct GroupExpr : public Expr {
     }
 private:
     Expr* m_Expr;
+
+    friend PrettyPrinter;
 };
 
 struct CallExpr final : public Expr {
@@ -127,6 +138,8 @@ private:
 
     friend Interpreter;
     friend Object;
+
+    friend PrettyPrinter;
 };
 
 struct AttributeAccessExpr : public Expr
@@ -144,4 +157,6 @@ struct AttributeAccessExpr : public Expr
         delete m_Attribute;
     }
     Expr * m_Object, * m_Attribute;
+
+    friend PrettyPrinter;
 };

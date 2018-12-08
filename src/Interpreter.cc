@@ -36,7 +36,8 @@ void Interpreter::Evaluate(std::string & s)
         auto st = p.Parse();
         for (auto & e : st)
         {
-            Execute (e);
+            if (e != nullptr) {Execute (e);}
+            // Execute (e);
         }
         // CHANGE
         for (auto & e : st)
@@ -226,17 +227,55 @@ Var Interpreter::visit_Callable(Callable * function, std::vector<Expr*>& args)
 void Interpreter::visit_AttributeAccessExpr (AttributeAccessExpr * attr_access_expr)
 {
     Var object = Eval (attr_access_expr -> m_Object);
+    Expr * attr = (attr_access_expr -> m_Attribute);
     try {
-        auto func = static_cast<CallExpr *> (attr_access_expr->m_Attribute);
-        m_ExprVal = ((Object *)object) -> call (this, func);
-    } catch (std::out_of_range & e)
-    {
+        auto func = static_cast<CallExpr *> (attr);
+        m_ExprVal = (static_cast<Object *>(object)) -> call (this, func);
+        LOG("func")
+    } catch (std::exception & e) {
         try {
-            m_ExprVal = ((Object *)object)->call (this, static_cast<IdentifierExpr*> (attr_access_expr->m_Attribute));
-        } catch (std::exception & e)
-        {
-            LOG(e.what());
+            // AttributeAccessExpr * atrac = static_cast<AttributeAccessExpr *> (attr);
+            // Var ob = Eval (new AttributeAccessExpr ());
+        } catch (std::exception & e) {
+            try {
+                auto member = static_cast< IdentifierExpr *> (attr);
+                m_ExprVal = (static_cast <Object *> (object))->call (this, member);
+                LOG("id")
+            } catch (std::exception & e) {
+                LOG(e.what());
+            }
         }
+    }
+    try {
+        while (true)
+        {
+            try {
+                auto mem = static_cast <IdentifierExpr *> (attr_access_expr -> m_Attribute);
+                attr_access_expr = static_cast <AttributeAccessExpr *> (
+                    static_cast <Object *> (Eval(attr_access_expr -> m_Object)) -> call (
+                        this, mem 
+                    ));
+            }
+            catch  (std::exception & e) {
+
+            }
+            attr_access_expr = static_cast <AttributeAccessExpr *> (
+                        static_cast <Object *> (Eval(attr_access_expr -> m_Object)) -> call (
+                            this, 
+                        ));
+        }
+    }
+    catch () {
+
+    }
+}
+
+Var Interpreter :: GetAttribute (Object * object, Expr * attr)
+{
+    try {
+        
+    } catch () {
+
     }
 }
 

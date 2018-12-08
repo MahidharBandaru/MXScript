@@ -23,7 +23,7 @@ struct Lexer {
     Var GetValue() const noexcept;
     Position GetPosition () const noexcept;
     std::string GetCurrTokText () const noexcept;
-    inline bool AtEnd () const noexcept;
+    inline bool AtEnd () const noexcept {return (m_current >= m_end);}
 
 private:
     Var m_value;

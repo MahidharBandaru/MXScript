@@ -61,6 +61,9 @@ struct Object
         m_Env . insert ({std::string(attr), v});
     }
 
+    std::string bark () const noexcept {
+        return m_Struct -> get_name ();
+    }
     Struct * m_Struct;
     Env m_Env;
 };

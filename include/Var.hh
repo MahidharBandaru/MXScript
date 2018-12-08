@@ -7,8 +7,6 @@
 #include <iostream>
 #include "Type.hh"
 
-#define LOG(x) std::cout << x << std::endl;
-
 struct Callable;
 struct Object;
 
@@ -60,6 +58,9 @@ struct Var {
     bool IsCallable() {
         return m_CurrentType == Type::Callable;
     }
+    bool IsObject () {
+        return m_CurrentType == Type::Object;
+    }
 private:
     std::variant<std::monostate, bool, int, double, std::string,
                 std::shared_ptr<std::vector<Var> >, Callable*, Object*> m_value;
@@ -96,7 +97,7 @@ private:
         }
         void operator() (Object * o)
         {
-            std::cout << "<Instance of ..?..>";
+            std::cout << "<Instance of ";
         }
     };
 
